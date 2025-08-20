@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	. "github.com/fogleman/fauxgl"
 	"github.com/nfnt/resize"
+	. "github.com/swordkee/fauxgl"
 )
 
 const (
@@ -27,13 +27,13 @@ var (
 
 func main() {
 	// load the mesh
-	mesh, err := LoadOBJ("examples/square.obj")
+	mesh, err := LoadGLTF("examples/mug.gltf")
 	if err != nil {
 		panic(err)
 	}
 
 	// load the texture
-	texture, err := LoadTexture("examples/texture.png")
+	texture, err := LoadTexture("examples/texture.jpg")
 	if err != nil {
 		panic(err)
 	}

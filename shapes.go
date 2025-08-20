@@ -2,6 +2,7 @@ package fauxgl
 
 import "math"
 
+// NewPlane f
 func NewPlane() *Mesh {
 	v1 := Vector{-0.5, -0.5, 0}
 	v2 := Vector{0.5, -0.5, 0}
@@ -13,6 +14,7 @@ func NewPlane() *Mesh {
 	})
 }
 
+// NewCube f
 func NewCube() *Mesh {
 	v := []Vector{
 		{-1, -1, -1}, {-1, -1, 1}, {-1, 1, -1}, {-1, 1, 1},
@@ -36,6 +38,7 @@ func NewCube() *Mesh {
 	return mesh
 }
 
+// NewCubeForBox f
 func NewCubeForBox(box Box) *Mesh {
 	m := Translate(Vector{0.5, 0.5, 0.5})
 	m = m.Scale(box.Size())
@@ -45,6 +48,7 @@ func NewCubeForBox(box Box) *Mesh {
 	return cube
 }
 
+// NewCubeOutlineForBox f
 func NewCubeOutlineForBox(box Box) *Mesh {
 	x0 := box.Min.X
 	y0 := box.Min.Y
@@ -68,6 +72,7 @@ func NewCubeOutlineForBox(box Box) *Mesh {
 	})
 }
 
+// NewLatLngSphere f
 func NewLatLngSphere(latStep, lngStep int) *Mesh {
 	var triangles []*Triangle
 	for lat0 := -90; lat0 < 90; lat0 += latStep {
@@ -104,6 +109,7 @@ func NewLatLngSphere(latStep, lngStep int) *Mesh {
 	return NewTriangleMesh(triangles)
 }
 
+// NewSphere f
 func NewSphere(detail int) *Mesh {
 	var triangles []*Triangle
 	ico := NewIcosahedron()
@@ -132,6 +138,7 @@ func newSphereHelper(detail int, v1, v2, v3 Vector) []*Triangle {
 	return triangles
 }
 
+// NewCylinder f
 func NewCylinder(step int, capped bool) *Mesh {
 	var triangles []*Triangle
 	for a0 := 0; a0 < 360; a0 += step {
@@ -162,6 +169,7 @@ func NewCylinder(step int, capped bool) *Mesh {
 	return NewTriangleMesh(triangles)
 }
 
+// NewCone f
 func NewCone(step int, capped bool) *Mesh {
 	var triangles []*Triangle
 	for a0 := 0; a0 < 360; a0 += step {
@@ -186,6 +194,7 @@ func NewCone(step int, capped bool) *Mesh {
 	return NewTriangleMesh(triangles)
 }
 
+// NewIcosahedron f
 func NewIcosahedron() *Mesh {
 	const a = 0.8506507174597755
 	const b = 0.5257312591858783

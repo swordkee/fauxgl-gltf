@@ -2,6 +2,7 @@ package fauxgl
 
 import "math"
 
+// Matrix f
 type Matrix struct {
 	X00, X01, X02, X03 float64
 	X10, X11, X12, X13 float64
@@ -9,6 +10,7 @@ type Matrix struct {
 	X30, X31, X32, X33 float64
 }
 
+// Identity f
 func Identity() Matrix {
 	return Matrix{
 		1, 0, 0, 0,
@@ -17,6 +19,7 @@ func Identity() Matrix {
 		0, 0, 0, 1}
 }
 
+// Translate f
 func Translate(v Vector) Matrix {
 	return Matrix{
 		1, 0, 0, v.X,
@@ -25,6 +28,7 @@ func Translate(v Vector) Matrix {
 		0, 0, 0, 1}
 }
 
+// Scale f
 func Scale(v Vector) Matrix {
 	return Matrix{
 		v.X, 0, 0, 0,
@@ -33,6 +37,7 @@ func Scale(v Vector) Matrix {
 		0, 0, 0, 1}
 }
 
+// Rotate f
 func Rotate(v Vector, a float64) Matrix {
 	v = v.Normalize()
 	s := math.Sin(a)
@@ -45,6 +50,7 @@ func Rotate(v Vector, a float64) Matrix {
 		0, 0, 0, 1}
 }
 
+// RotateTo f
 func RotateTo(a, b Vector) Matrix {
 	dot := b.Dot(a)
 	if dot == 1 {
@@ -58,6 +64,7 @@ func RotateTo(a, b Vector) Matrix {
 	}
 }
 
+// Orient f
 func Orient(position, size, up Vector, rotation float64) Matrix {
 	m := Rotate(Vector{0, 0, 1}, rotation)
 	m = m.Scale(size)
@@ -66,6 +73,7 @@ func Orient(position, size, up Vector, rotation float64) Matrix {
 	return m
 }
 
+// Frustum f
 func Frustum(l, r, b, t, n, f float64) Matrix {
 	t1 := 2 * n
 	t2 := r - l
@@ -78,6 +86,7 @@ func Frustum(l, r, b, t, n, f float64) Matrix {
 		0, 0, -1, 0}
 }
 
+// Orthographic f
 func Orthographic(l, r, b, t, n, f float64) Matrix {
 	return Matrix{
 		2 / (r - l), 0, 0, -(r + l) / (r - l),
@@ -86,12 +95,14 @@ func Orthographic(l, r, b, t, n, f float64) Matrix {
 		0, 0, 0, 1}
 }
 
+// Perspective f
 func Perspective(fovy, aspect, near, far float64) Matrix {
 	ymax := near * math.Tan(fovy*math.Pi/360)
 	xmax := ymax * aspect
 	return Frustum(-xmax, xmax, -ymax, ymax, near, far)
 }
 
+// LookAt f
 func LookAt(eye, center, up Vector) Matrix {
 	z := eye.Sub(center).Normalize()
 	x := up.Cross(z).Normalize()
@@ -104,6 +115,7 @@ func LookAt(eye, center, up Vector) Matrix {
 	}
 }
 
+// LookAtDirection f
 func LookAtDirection(forward, up Vector) Matrix {
 	z := forward.Normalize()
 	x := up.Cross(z).Normalize()
@@ -116,6 +128,7 @@ func LookAtDirection(forward, up Vector) Matrix {
 	}
 }
 
+// Screen f
 func Screen(w, h int) Matrix {
 	w2 := float64(w) / 2
 	h2 := float64(h) / 2
@@ -127,6 +140,7 @@ func Screen(w, h int) Matrix {
 	}
 }
 
+// Viewport f
 func Viewport(x, y, w, h float64) Matrix {
 	l := x
 	b := y
@@ -140,42 +154,52 @@ func Viewport(x, y, w, h float64) Matrix {
 	}
 }
 
-func (m Matrix) Translate(v Vector) Matrix {
-	return Translate(v).Mul(m)
+// Translate f
+func (a Matrix) Translate(v Vector) Matrix {
+	return Translate(v).Mul(a)
 }
 
-func (m Matrix) Scale(v Vector) Matrix {
-	return Scale(v).Mul(m)
+// Scale f
+func (a Matrix) Scale(v Vector) Matrix {
+	return Scale(v).Mul(a)
 }
 
-func (m Matrix) Rotate(v Vector, a float64) Matrix {
-	return Rotate(v, a).Mul(m)
+// Rotate f
+func (a Matrix) Rotate(v Vector, f float64) Matrix {
+	return Rotate(v, f).Mul(a)
 }
 
-func (m Matrix) RotateTo(a, b Vector) Matrix {
-	return RotateTo(a, b).Mul(m)
+// RotateTo f
+func (a Matrix) RotateTo(b, c Vector) Matrix {
+	return RotateTo(b, c).Mul(a)
 }
 
-func (m Matrix) Frustum(l, r, b, t, n, f float64) Matrix {
-	return Frustum(l, r, b, t, n, f).Mul(m)
+// Frustum f
+func (a Matrix) Frustum(l, r, b, t, n, f float64) Matrix {
+	return Frustum(l, r, b, t, n, f).Mul(a)
 }
 
-func (m Matrix) Orthographic(l, r, b, t, n, f float64) Matrix {
-	return Orthographic(l, r, b, t, n, f).Mul(m)
+// Orthographic f
+func (a Matrix) Orthographic(l, r, b, t, n, f float64) Matrix {
+	return Orthographic(l, r, b, t, n, f).Mul(a)
 }
 
-func (m Matrix) Perspective(fovy, aspect, near, far float64) Matrix {
-	return Perspective(fovy, aspect, near, far).Mul(m)
+// Perspective f
+func (a Matrix) Perspective(fovy, aspect, near, far float64) Matrix {
+	return Perspective(fovy, aspect, near, far).Mul(a)
 }
 
-func (m Matrix) LookAt(eye, center, up Vector) Matrix {
-	return LookAt(eye, center, up).Mul(m)
+// LookAt f
+func (a Matrix) LookAt(eye, center, up Vector) Matrix {
+	return LookAt(eye, center, up).Mul(a)
 }
 
-func (m Matrix) Viewport(x, y, w, h float64) Matrix {
-	return Viewport(x, y, w, h).Mul(m)
+// Viewport f
+func (a Matrix) Viewport(x, y, w, h float64) Matrix {
+	return Viewport(x, y, w, h).Mul(a)
 }
 
+// MulScalar f
 func (a Matrix) MulScalar(b float64) Matrix {
 	return Matrix{
 		a.X00 * b, a.X01 * b, a.X02 * b, a.X03 * b,
@@ -185,6 +209,7 @@ func (a Matrix) MulScalar(b float64) Matrix {
 	}
 }
 
+// Mul f
 func (a Matrix) Mul(b Matrix) Matrix {
 	m := Matrix{}
 	m.X00 = a.X00*b.X00 + a.X01*b.X10 + a.X02*b.X20 + a.X03*b.X30
@@ -206,6 +231,7 @@ func (a Matrix) Mul(b Matrix) Matrix {
 	return m
 }
 
+// MulPosition f
 func (a Matrix) MulPosition(b Vector) Vector {
 	x := a.X00*b.X + a.X01*b.Y + a.X02*b.Z + a.X03
 	y := a.X10*b.X + a.X11*b.Y + a.X12*b.Z + a.X13
@@ -213,6 +239,7 @@ func (a Matrix) MulPosition(b Vector) Vector {
 	return Vector{x, y, z}
 }
 
+// MulPositionW f
 func (a Matrix) MulPositionW(b Vector) VectorW {
 	x := a.X00*b.X + a.X01*b.Y + a.X02*b.Z + a.X03
 	y := a.X10*b.X + a.X11*b.Y + a.X12*b.Z + a.X13
@@ -221,6 +248,7 @@ func (a Matrix) MulPositionW(b Vector) VectorW {
 	return VectorW{x, y, z, w}
 }
 
+// MulDirection f
 func (a Matrix) MulDirection(b Vector) Vector {
 	x := a.X00*b.X + a.X01*b.Y + a.X02*b.Z
 	y := a.X10*b.X + a.X11*b.Y + a.X12*b.Z
@@ -228,6 +256,7 @@ func (a Matrix) MulDirection(b Vector) Vector {
 	return Vector{x, y, z}.Normalize()
 }
 
+// MulBox f
 func (a Matrix) MulBox(box Box) Box {
 	// http://dev.theomader.com/transform-bounding-boxes/
 	r := Vector{a.X00, a.X10, a.X20}
@@ -248,6 +277,7 @@ func (a Matrix) MulBox(box Box) Box {
 	return Box{min, max}
 }
 
+// Transpose f
 func (a Matrix) Transpose() Matrix {
 	return Matrix{
 		a.X00, a.X10, a.X20, a.X30,
@@ -256,6 +286,7 @@ func (a Matrix) Transpose() Matrix {
 		a.X03, a.X13, a.X23, a.X33}
 }
 
+// Determinant f
 func (a Matrix) Determinant() float64 {
 	return (a.X00*a.X11*a.X22*a.X33 - a.X00*a.X11*a.X23*a.X32 +
 		a.X00*a.X12*a.X23*a.X31 - a.X00*a.X12*a.X21*a.X33 +
@@ -271,6 +302,7 @@ func (a Matrix) Determinant() float64 {
 		a.X03*a.X12*a.X20*a.X31 + a.X03*a.X12*a.X21*a.X30)
 }
 
+// Inverse f
 func (a Matrix) Inverse() Matrix {
 	m := Matrix{}
 	d := a.Determinant()

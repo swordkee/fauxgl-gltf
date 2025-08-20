@@ -8,28 +8,37 @@ import (
 	"sync"
 )
 
+// Face f
 type Face int
 
 const (
 	_ Face = iota
+	// FaceCW f
 	FaceCW
+	// FaceCCW f
 	FaceCCW
 )
 
+// Cull f
 type Cull int
 
 const (
 	_ Cull = iota
+	// CullNone f
 	CullNone
+	// CullFront f
 	CullFront
+	// CullBack f
 	CullBack
 )
 
+// RasterizeInfo f
 type RasterizeInfo struct {
 	TotalPixels   uint64
 	UpdatedPixels uint64
 }
 
+// Add f
 func (info RasterizeInfo) Add(other RasterizeInfo) RasterizeInfo {
 	return RasterizeInfo{
 		info.TotalPixels + other.TotalPixels,

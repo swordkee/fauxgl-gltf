@@ -39,6 +39,8 @@ func LoadMesh(path string) (*Mesh, error) {
 		return LoadPLY(path)
 	case ".3ds":
 		return Load3DS(path)
+	case ".gltf":
+		return LoadGLTF(path)
 	}
 	return nil, fmt.Errorf("unrecognized mesh extension: %s", ext)
 }

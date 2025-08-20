@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	. "github.com/fogleman/fauxgl"
 	"github.com/nfnt/resize"
+	. "github.com/swordkee/fauxgl"
 )
 
 // download dragon.obj from here:

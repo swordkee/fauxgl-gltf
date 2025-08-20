@@ -172,8 +172,8 @@ func (a Vector) MaxComponent() float64 {
 	return math.Max(math.Max(a.X, a.Y), a.Z)
 }
 
-func (i Vector) Reflect(n Vector) Vector {
-	return i.Sub(n.MulScalar(2 * n.Dot(i)))
+func (a Vector) Reflect(n Vector) Vector {
+	return a.Sub(n.MulScalar(2 * n.Dot(a)))
 }
 
 func (a Vector) Perpendicular() Vector {
@@ -186,19 +186,19 @@ func (a Vector) Perpendicular() Vector {
 	return Vector{-a.Y, a.X, 0}.Normalize()
 }
 
-func (p Vector) SegmentDistance(v Vector, w Vector) float64 {
+func (a Vector) SegmentDistance(v Vector, w Vector) float64 {
 	l2 := v.DistanceSquared(w)
 	if l2 == 0 {
-		return p.Distance(v)
+		return a.Distance(v)
 	}
-	t := p.Sub(v).Dot(w.Sub(v)) / l2
+	t := a.Sub(v).Dot(w.Sub(v)) / l2
 	if t < 0 {
-		return p.Distance(v)
+		return a.Distance(v)
 	}
 	if t > 1 {
-		return p.Distance(w)
+		return a.Distance(w)
 	}
-	return v.Add(w.Sub(v).MulScalar(t)).Distance(p)
+	return v.Add(w.Sub(v).MulScalar(t)).Distance(a)
 }
 
 type VectorW struct {

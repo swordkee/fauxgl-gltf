@@ -6,8 +6,8 @@ import (
 	"math/rand"
 	"time"
 
-	. "github.com/fogleman/fauxgl"
 	"github.com/nfnt/resize"
+	. "github.com/swordkee/fauxgl"
 )
 
 const (

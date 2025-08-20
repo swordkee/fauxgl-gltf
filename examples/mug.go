@@ -12,12 +12,12 @@ const (
 
 var (
 	eye    = V(-1, -2, 2)
-	center = V(-0.07, 0, 0)
+	center = V(-0, 0, 0)
 	up     = V(0, 0, 1)
 )
 
 func main() {
-	mesh, err := LoadSTL("examples/hello.stl")
+	mesh, err := LoadGLTF("examples/mug.gltf")
 	if err != nil {
 		panic(err)
 	}
@@ -25,12 +25,12 @@ func main() {
 	mesh.SmoothNormalsThreshold(Radians(30))
 
 	context := NewContext(width, height)
-	context.ClearColor = Black
+	context.ClearColor = White
 	context.ClearColorBuffer()
 
 	aspect := float64(width) / float64(height)
 	matrix := LookAt(eye, center, up).Perspective(fovy, aspect, near, far)
-	light := V(-2, 0, 1).Normalize()
+	light := V(0, 0, 1).Normalize()
 	color := Color{0.5, 1, 0.65, 1}
 
 	shader := NewPhongShader(matrix, light, eye)

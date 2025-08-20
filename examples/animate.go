@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	. "github.com/fogleman/fauxgl"
 	"github.com/nfnt/resize"
+	. "github.com/swordkee/fauxgl"
 )
 
 const (
@@ -51,7 +51,7 @@ func main() {
 		context.ClearDepthBuffer()
 		context.ClearColorBufferWith(background)
 		shader := NewPhongShader(matrix, light, eye)
-		shader.ObjectColor = color
+		//shader.ObjectColor = color
 		shader.DiffuseColor = Gray(0.9)
 		shader.SpecularColor = Gray(0.25)
 		shader.SpecularPower = 100

@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"encoding/binary"
 	"io"
+	"io/fs"
 	"math"
 	"os"
 	"runtime"
@@ -56,7 +57,31 @@ func LoadSTL(path string) (*Mesh, error) {
 	}
 }
 
-func loadSTLA(file *os.File) (*Mesh, error) {
+func LoadSTLF(file fs.File) (func(file fs.File) (*Mesh, error), error) {
+
+	// get file size
+	info, err := file.Stat()
+	if err != nil {
+		return nil, err
+	}
+	size := info.Size()
+
+	// read header, get expected binary size
+	header := STLHeader{}
+	if err := binary.Read(file, binary.LittleEndian, &header); err != nil {
+		return nil, err
+	}
+	expectedSize := int64(header.Count)*50 + 84
+
+	// parse ascii or binary stl
+	if size == expectedSize {
+		return loadSTLB, nil
+	} else {
+		return loadSTLA, nil
+	}
+}
+
+func loadSTLA(file fs.File) (*Mesh, error) {
 	var vertexes []Vector
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
@@ -83,7 +108,7 @@ func makeFloat(b []byte) float64 {
 	return float64(math.Float32frombits(binary.LittleEndian.Uint32(b)))
 }
 
-func loadSTLB(file *os.File) (*Mesh, error) {
+func loadSTLB(file fs.File) (*Mesh, error) {
 	r := bufio.NewReader(file)
 	header := STLHeader{}
 	if err := binary.Read(r, binary.LittleEndian, &header); err != nil {

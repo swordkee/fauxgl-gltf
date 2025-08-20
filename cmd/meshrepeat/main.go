@@ -4,8 +4,8 @@ import (
 	"log"
 	"math"
 
-	. "github.com/fogleman/fauxgl"
-	kingpin "gopkg.in/alecthomas/kingpin.v2"
+	kingpin "github.com/alecthomas/kingpin/v2"
+	. "github.com/swordkee/fauxgl"
 )
 
 var (
