@@ -4,10 +4,47 @@ import (
 	"math"
 )
 
-// Shader shader interface
 type Shader interface {
 	Vertex(Vertex) Vertex
-	Fragment(Vertex, *Object) Color
+	Fragment(Vertex) Color
+}
+
+// SolidColorShader renders with a single, solid color.
+type SolidColorShader struct {
+	Matrix Matrix
+	Color  Color
+}
+
+func NewSolidColorShader(matrix Matrix, color Color) *SolidColorShader {
+	return &SolidColorShader{matrix, color}
+}
+
+func (shader *SolidColorShader) Vertex(v Vertex) Vertex {
+	v.Output = shader.Matrix.MulPositionW(v.Position)
+	return v
+}
+
+func (shader *SolidColorShader) Fragment(v Vertex) Color {
+	return shader.Color
+}
+
+// TextureShader renders with a texture and no lighting.
+type TextureShader struct {
+	Matrix  Matrix
+	Texture Texture
+}
+
+func NewTextureShader(matrix Matrix, texture Texture) *TextureShader {
+	return &TextureShader{matrix, texture}
+}
+
+func (shader *TextureShader) Vertex(v Vertex) Vertex {
+	v.Output = shader.Matrix.MulPositionW(v.Position)
+	return v
+}
+
+func (shader *TextureShader) Fragment(v Vertex) Color {
+	return shader.Texture.BilinearSample(v.Texture.X, v.Texture.Y)
 }
 
 // PhongShader implements Phong shading with an optional texture.
@@ -15,9 +52,11 @@ type PhongShader struct {
 	Matrix         Matrix
 	LightDirection Vector
 	CameraPosition Vector
+	ObjectColor    Color
 	AmbientColor   Color
 	DiffuseColor   Color
 	SpecularColor  Color
+	Texture        Texture
 	SpecularPower  float64
 }
 
@@ -28,7 +67,7 @@ func NewPhongShader(matrix Matrix, lightDirection, cameraPosition Vector) *Phong
 	specular := Color{1, 1, 1, 1}
 	return &PhongShader{
 		matrix, lightDirection, cameraPosition,
-		ambient, diffuse, specular, 32}
+		Discard, ambient, diffuse, specular, nil, 32}
 }
 
 // Vertex f
@@ -37,15 +76,14 @@ func (shader *PhongShader) Vertex(v Vertex) Vertex {
 	return v
 }
 
-// Fragment f
-func (shader *PhongShader) Fragment(v Vertex, fromObject *Object) Color {
+func (shader *PhongShader) Fragment(v Vertex) Color {
 	light := shader.AmbientColor
-	color := fromObject.Color
-	if fromObject.Texture != nil {
-		sample := fromObject.Texture.Sample(v.Texture.X, v.Texture.Y)
-		if sample.A > 0 {
-			color = color.Lerp(sample.DivScalar(sample.A), sample.A)
-		}
+	color := v.Color
+	if shader.ObjectColor != Discard {
+		color = shader.ObjectColor
+	}
+	if shader.Texture != nil {
+		color = shader.Texture.BilinearSample(v.Texture.X, v.Texture.Y)
 	}
 	diffuse := math.Max(v.Normal.Dot(shader.LightDirection), 0)
 	light = light.Add(shader.DiffuseColor.MulScalar(diffuse))
@@ -58,9 +96,5 @@ func (shader *PhongShader) Fragment(v Vertex, fromObject *Object) Color {
 			light = light.Add(shader.SpecularColor.MulScalar(specular))
 		}
 	}
-	if color.A < 1 {
-		return color.Mul(light).Min(White).DivScalar(color.A).Alpha(color.A)
-	}
-
 	return color.Mul(light).Min(White).Alpha(color.A)
 }
