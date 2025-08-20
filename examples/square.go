@@ -27,13 +27,13 @@ var (
 
 func main() {
 	// load the mesh
-	mesh, err := LoadGLTF("examples/mug.gltf")
+	mesh, err := LoadOBJ("examples/square.obj")
 	if err != nil {
 		panic(err)
 	}
 
 	// load the texture
-	texture, err := LoadTexture("examples/texture.jpg")
+	texture, err := LoadTexture("examples/texture.png")
 	if err != nil {
 		panic(err)
 	}
