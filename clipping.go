@@ -1,5 +1,8 @@
 package fauxgl
 
+// Basic frustum clipping functions
+// Simplified version of the original clipping functionality
+
 var clipPlanes = []clipPlane{
 	{VectorW{1, 0, 0, 1}, VectorW{-1, 0, 0, 1}},
 	{VectorW{-1, 0, 0, 1}, VectorW{1, 0, 0, 1}},
@@ -51,6 +54,7 @@ func sutherlandHodgman(points []VectorW, planes []clipPlane) []VectorW {
 	return output
 }
 
+// ClipTriangle clips a triangle against the viewing frustum
 func ClipTriangle(t *Triangle) []*Triangle {
 	w1 := t.V1.Output
 	w2 := t.V2.Output
@@ -73,6 +77,7 @@ func ClipTriangle(t *Triangle) []*Triangle {
 	return result
 }
 
+// ClipLine clips a line against the viewing frustum
 func ClipLine(l *Line) *Line {
 	// TODO: interpolate vertex attributes when clipped
 	w1 := l.V1.Output

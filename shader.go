@@ -98,3 +98,207 @@ func (shader *PhongShader) Fragment(v Vertex) Color {
 	}
 	return color.Mul(light).Min(White).Alpha(color.A)
 }
+
+// PBRShader implements physically-based rendering
+type PBRShader struct {
+	Matrix         Matrix
+	Material       *PBRMaterial
+	Lights         []Light
+	AmbientColor   Color
+	CameraPosition Vector
+	pbrLighting    *PBRLighting
+}
+
+// NewPBRShader creates a new PBR shader
+func NewPBRShader(matrix Matrix, material *PBRMaterial, lights []Light, cameraPos Vector) *PBRShader {
+	return &PBRShader{
+		Matrix:         matrix,
+		Material:       material,
+		Lights:         lights,
+		AmbientColor:   Color{0.1, 0.1, 0.1, 1.0},
+		CameraPosition: cameraPos,
+		pbrLighting:    &PBRLighting{},
+	}
+}
+
+// Vertex processes a vertex through the PBR shader pipeline
+func (shader *PBRShader) Vertex(v Vertex) Vertex {
+	v.Output = shader.Matrix.MulPositionW(v.Position)
+	return v
+}
+
+// Fragment performs PBR shading calculations
+func (shader *PBRShader) Fragment(v Vertex) Color {
+	if shader.Material == nil {
+		return Color{1, 0, 1, 1} // Magenta for missing material
+	}
+
+	// Sample material properties at current texture coordinates
+	sampledMaterial := shader.Material.Sample(v.Texture.X, v.Texture.Y)
+
+	// Transform normal from tangent space to world space
+	// For simplicity, we'll use the vertex normal directly
+	// In a full implementation, you'd calculate TBN matrix
+	worldNormal := v.Normal.Normalize()
+
+	// Calculate view direction
+	viewDir := shader.CameraPosition.Sub(v.Position).Normalize()
+
+	// Perform PBR lighting calculation
+	finalColor := shader.pbrLighting.CalculatePBR(
+		sampledMaterial,
+		v.Position,
+		worldNormal,
+		viewDir,
+		shader.Lights,
+		shader.AmbientColor,
+	)
+
+	// Handle alpha mode
+	switch shader.Material.AlphaMode {
+	case AlphaMask:
+		if finalColor.A < shader.Material.AlphaCutoff {
+			return Discard // Discard fragment
+		}
+		finalColor.A = 1.0
+	case AlphaBlend:
+		// Keep original alpha
+	default: // AlphaOpaque
+		finalColor.A = 1.0
+	}
+
+	return finalColor
+}
+
+// MetallicRoughnessShader is a specialized PBR shader for metallic-roughness workflow
+type MetallicRoughnessShader struct {
+	*PBRShader
+	BaseColorTexture         *AdvancedTexture
+	MetallicRoughnessTexture *AdvancedTexture
+	NormalTexture            *AdvancedTexture
+	OcclusionTexture         *AdvancedTexture
+	EmissiveTexture          *AdvancedTexture
+}
+
+// NewMetallicRoughnessShader creates a metallic-roughness PBR shader
+func NewMetallicRoughnessShader(matrix Matrix, lights []Light, cameraPos Vector) *MetallicRoughnessShader {
+	pbrShader := &PBRShader{
+		Matrix:         matrix,
+		Material:       NewPBRMaterial(),
+		Lights:         lights,
+		AmbientColor:   Color{0.1, 0.1, 0.1, 1.0},
+		CameraPosition: cameraPos,
+		pbrLighting:    &PBRLighting{},
+	}
+
+	return &MetallicRoughnessShader{
+		PBRShader: pbrShader,
+	}
+}
+
+// Fragment performs metallic-roughness PBR shading
+func (shader *MetallicRoughnessShader) Fragment(v Vertex) Color {
+	u, v_coord := v.Texture.X, v.Texture.Y
+
+	// Sample base color
+	baseColor := shader.Material.BaseColorFactor
+	if shader.BaseColorTexture != nil {
+		baseColor = baseColor.Mul(shader.BaseColorTexture.Sample(u, v_coord))
+	}
+
+	// Sample metallic and roughness
+	metallic := shader.Material.MetallicFactor
+	roughness := shader.Material.RoughnessFactor
+	if shader.MetallicRoughnessTexture != nil {
+		mr := shader.MetallicRoughnessTexture.Sample(u, v_coord)
+		metallic *= mr.B  // Blue channel
+		roughness *= mr.G // Green channel
+	}
+
+	// Sample normal
+	normal := v.Normal.Normalize()
+	if shader.NormalTexture != nil {
+		tangentNormal := shader.NormalTexture.SampleNormal(u, v_coord)
+		// For simplicity, just use the normal directly
+		// In practice, you'd transform from tangent to world space
+		normal = tangentNormal
+	}
+
+	// Sample occlusion
+	occlusion := 1.0
+	if shader.OcclusionTexture != nil {
+		occlusionColor := shader.OcclusionTexture.Sample(u, v_coord)
+		occlusion = occlusionColor.R
+	}
+
+	// Sample emissive
+	emissive := shader.Material.EmissiveFactor
+	if shader.EmissiveTexture != nil {
+		emissive = emissive.Mul(shader.EmissiveTexture.Sample(u, v_coord))
+	}
+
+	// Create sampled material
+	sampledMaterial := &SampledMaterial{
+		BaseColor: baseColor,
+		Metallic:  metallic,
+		Roughness: roughness,
+		Normal:    normal,
+		Occlusion: occlusion,
+		Emissive:  emissive,
+	}
+
+	// Calculate view direction
+	viewDir := shader.CameraPosition.Sub(v.Position).Normalize()
+
+	// Perform PBR lighting calculation
+	finalColor := shader.pbrLighting.CalculatePBR(
+		sampledMaterial,
+		v.Position,
+		normal,
+		viewDir,
+		shader.Lights,
+		shader.AmbientColor,
+	)
+
+	return finalColor
+}
+
+// EnvironmentShader renders environment mapping and reflections
+type EnvironmentShader struct {
+	Matrix         Matrix
+	CubeMap        *CubeMapTexture
+	CameraPosition Vector
+	Reflectance    float64
+}
+
+// NewEnvironmentShader creates a new environment shader
+func NewEnvironmentShader(matrix Matrix, cubeMap *CubeMapTexture, cameraPos Vector) *EnvironmentShader {
+	return &EnvironmentShader{
+		Matrix:         matrix,
+		CubeMap:        cubeMap,
+		CameraPosition: cameraPos,
+		Reflectance:    1.0,
+	}
+}
+
+// Vertex processes vertices for environment mapping
+func (shader *EnvironmentShader) Vertex(v Vertex) Vertex {
+	v.Output = shader.Matrix.MulPositionW(v.Position)
+	return v
+}
+
+// Fragment performs environment mapping
+func (shader *EnvironmentShader) Fragment(v Vertex) Color {
+	if shader.CubeMap == nil {
+		return Color{0, 0, 0, 1}
+	}
+
+	// Calculate reflection direction
+	viewDir := shader.CameraPosition.Sub(v.Position).Normalize()
+	reflectionDir := viewDir.Reflect(v.Normal)
+
+	// Sample cube map
+	reflectionColor := shader.CubeMap.SampleCubeMap(reflectionDir)
+
+	return reflectionColor.MulScalar(shader.Reflectance)
+}

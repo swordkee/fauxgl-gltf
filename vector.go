@@ -2,7 +2,6 @@ package fauxgl
 
 import (
 	"math"
-	"math/rand"
 )
 
 type Vector struct {
@@ -11,18 +10,6 @@ type Vector struct {
 
 func V(x, y, z float64) Vector {
 	return Vector{x, y, z}
-}
-
-func RandomUnitVector() Vector {
-	for {
-		x := rand.Float64()*2 - 1
-		y := rand.Float64()*2 - 1
-		z := rand.Float64()*2 - 1
-		if x*x+y*y+z*z > 1 {
-			continue
-		}
-		return Vector{x, y, z}.Normalize()
-	}
 }
 
 func (a Vector) VectorW() VectorW {

@@ -213,13 +213,6 @@ func (m *Mesh) Simplify(factor float64) {
 	}
 	m.dirty()
 }
-func (m *Mesh) SaveSTL(path string) error {
-	return SaveSTL(path, m)
-}
-
-func (m *Mesh) Silhouette(eye Vector, offset float64) *Mesh {
-	return silhouette(m, eye, offset)
-}
 
 func (m *Mesh) SplitTriangles(maxEdgeLength float64) {
 	var triangles []*Triangle

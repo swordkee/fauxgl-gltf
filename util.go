@@ -8,7 +8,6 @@ import (
 	"math"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 )
 
@@ -31,18 +30,10 @@ func LatLngToXYZ(lat, lng float64) Vector {
 func LoadMesh(path string) (*Mesh, error) {
 	ext := strings.ToLower(filepath.Ext(path))
 	switch ext {
-	case ".stl":
-		return LoadSTL(path)
-	case ".obj":
-		return LoadOBJ(path)
-	case ".ply":
-		return LoadPLY(path)
-	case ".3ds":
-		return Load3DS(path)
 	case ".gltf":
 		return LoadGLTF(path)
 	}
-	return nil, fmt.Errorf("unrecognized mesh extension: %s", ext)
+	return nil, fmt.Errorf("unsupported mesh format: %s (only GLTF is supported)", ext)
 }
 
 func LoadImage(path string) (image.Image, error) {
@@ -62,15 +53,6 @@ func SavePNG(path string, im image.Image) error {
 	}
 	defer file.Close()
 	return png.Encode(file, im)
-}
-
-func ParseFloats(items []string) []float64 {
-	result := make([]float64, len(items))
-	for i, item := range items {
-		f, _ := strconv.ParseFloat(item, 64)
-		result[i] = f
-	}
-	return result
 }
 
 func Clamp(x, lo, hi float64) float64 {

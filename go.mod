@@ -1,4 +1,4 @@
-module github.com/swordkee/fauxgl
+module github.com/swordkee/fauxgl-gltf
 
 go 1.20
 
