@@ -29,18 +29,7 @@ func main() {
 	scene, err := fauxgl.LoadGLTFScene(gltfPath)
 	if err != nil {
 		fmt.Printf("Error loading GLTF scene: %v\n", err)
-
-		// Fallback: try to load as simple mesh and create basic scene
-		fmt.Println("Attempting fallback loading...")
-		mesh, err := fauxgl.LoadGLTF(gltfPath)
-		if err != nil {
-			fmt.Printf("Fallback loading also failed: %v\n", err)
-			return
-		}
-
-		// Create a simple scene with the loaded mesh
-		scene = createFallbackScene(mesh, width, height)
-		fmt.Println("Created fallback scene")
+		return
 	}
 
 	// Print scene information
@@ -168,59 +157,38 @@ func main() {
 		frames, time.Since(startTime).Seconds())
 }
 
-// createFallbackScene creates a basic scene when GLTF scene loading fails
-func createFallbackScene(mesh *fauxgl.Mesh, width, height int) *fauxgl.Scene {
-	scene := fauxgl.NewScene("Fallback Scene")
-
-	// Add mesh to scene
-	scene.AddMesh("main_mesh", mesh)
-
-	// Create a default PBR material
-	material := fauxgl.NewPBRMaterial()
-	material.BaseColorFactor = fauxgl.Color{0.7, 0.7, 0.7, 1}
-	material.MetallicFactor = 0.1
-	material.RoughnessFactor = 0.8
-	scene.AddMaterial("default_material", material)
-
-	// Create scene node
-	node := scene.CreateMeshNode("main_object", "main_mesh", "default_material")
-	scene.RootNode.AddChild(node)
-
-	return scene
-}
-
 // printSceneInfo prints information about the loaded scene
-//func printSceneInfo(scene *fauxgl.Scene) {
-//	fmt.Printf("=== Scene Information ===\n")
-//	fmt.Printf("Scene Name: %s\n", scene.Name)
-//	fmt.Printf("Cameras: %d\n", len(scene.Cameras))
-//	fmt.Printf("Lights: %d\n", len(scene.Lights))
-//	fmt.Printf("Materials: %d\n", len(scene.Materials))
-//	fmt.Printf("Textures: %d\n", len(scene.Textures))
-//	fmt.Printf("Meshes: %d\n", len(scene.Meshes))
-//	fmt.Printf("Animations: %d\n", len(scene.Animations))
-//
-//	// Count renderable nodes
-//	renderables := scene.RootNode.GetRenderableNodes()
-//	fmt.Printf("Renderable nodes: %d\n", len(renderables))
-//
-//	// Scene bounds
-//	bounds := scene.GetBounds()
-//	fmt.Printf("Scene bounds: min=%v, max=%v\n", bounds.Min, bounds.Max)
-//	fmt.Printf("Scene size: %v\n", bounds.Size())
-//	fmt.Printf("Scene center: %v\n", bounds.Center())
-//
-//	// List materials
-//	if len(scene.Materials) > 0 {
-//		fmt.Printf("Materials:\n")
-//		for name, material := range scene.Materials {
-//			fmt.Printf("  - %s: metallic=%.2f, roughness=%.2f, baseColor=%v\n",
-//				name, material.MetallicFactor, material.RoughnessFactor, material.BaseColorFactor)
-//		}
-//	}
-//
-//	fmt.Printf("========================\n\n")
-//}
+func printSceneInfo(scene *fauxgl.Scene) {
+	fmt.Printf("=== Scene Information ===\n")
+	fmt.Printf("Scene Name: %s\n", scene.Name)
+	fmt.Printf("Cameras: %d\n", len(scene.Cameras))
+	fmt.Printf("Lights: %d\n", len(scene.Lights))
+	fmt.Printf("Materials: %d\n", len(scene.Materials))
+	fmt.Printf("Textures: %d\n", len(scene.Textures))
+	fmt.Printf("Meshes: %d\n", len(scene.Meshes))
+	fmt.Printf("Animations: %d\n", len(scene.Animations))
+
+	// Count renderable nodes
+	renderables := scene.RootNode.GetRenderableNodes()
+	fmt.Printf("Renderable nodes: %d\n", len(renderables))
+
+	// Scene bounds
+	bounds := scene.GetBounds()
+	fmt.Printf("Scene bounds: min=%v, max=%v\n", bounds.Min, bounds.Max)
+	fmt.Printf("Scene size: %v\n", bounds.Size())
+	fmt.Printf("Scene center: %v\n", bounds.Center())
+
+	// List materials
+	if len(scene.Materials) > 0 {
+		fmt.Printf("Materials:\n")
+		for name, material := range scene.Materials {
+			fmt.Printf("  - %s: metallic=%.2f, roughness=%.2f, baseColor=%v\n",
+				name, material.MetallicFactor, material.RoughnessFactor, material.BaseColorFactor)
+		}
+	}
+
+	fmt.Printf("========================\n\n")
+}
 
 // animateCamera animates the camera around the scene
 func animateCamera(camera *fauxgl.Camera, bounds fauxgl.Box, time float64) {

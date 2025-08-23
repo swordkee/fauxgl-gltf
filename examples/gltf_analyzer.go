@@ -354,24 +354,15 @@ func generateGoCode(gltf GLTFAnalysis, originalPath string) {
 	}
 
 	fmt.Printf("    \n")
-	fmt.Printf("    // Load GLTF mesh data\n")
-	fmt.Printf("    mesh, err := fauxgl.LoadGLTF(\"%s\")\n", originalPath)
+	fmt.Printf("    // Load GLTF scene data\n")
+	fmt.Printf("    scene, err := fauxgl.LoadGLTFScene(\"%s\")\n", originalPath)
 	fmt.Printf("    if err != nil {\n")
 	fmt.Printf("        panic(err)\n")
 	fmt.Printf("    }\n")
-	fmt.Printf("    scene.AddMesh(\"mug_mesh\", mesh)\n")
 	fmt.Printf("    \n")
-	fmt.Printf("    // Create scene node\n")
-	fmt.Printf("    node := scene.CreateMeshNode(\"mug_node\", \"mug_mesh\", \"material_1\")\n")
-
-	// 添加变换
-	if len(gltf.Nodes) > 0 && len(gltf.Nodes[0].Translation) >= 3 {
-		trans := gltf.Nodes[0].Translation
-		fmt.Printf("    node.SetTransform(fauxgl.Translate(fauxgl.V(%.6f, %.6f, %.6f)))\n",
-			trans[0], trans[1], trans[2])
-	}
-
-	fmt.Printf("    scene.RootNode.AddChild(node)\n")
+	fmt.Printf("    // Use existing scene structure\n")
+	fmt.Printf("    renderableNodes := scene.RootNode.GetRenderableNodes()\n")
+	fmt.Printf("    // Scene is ready to render\n")
 	fmt.Printf("    \n")
 	fmt.Printf("    return scene\n")
 	fmt.Printf("}\n\n")

@@ -1,14 +1,11 @@
 package fauxgl
 
 import (
-	"fmt"
 	"image"
 	_ "image/jpeg"
 	"image/png"
 	"math"
 	"os"
-	"path/filepath"
-	"strings"
 )
 
 func Radians(degrees float64) float64 {
@@ -25,15 +22,6 @@ func LatLngToXYZ(lat, lng float64) Vector {
 	y := math.Cos(lat) * math.Sin(lng)
 	z := math.Sin(lat)
 	return Vector{x, y, z}
-}
-
-func LoadMesh(path string) (*Mesh, error) {
-	ext := strings.ToLower(filepath.Ext(path))
-	switch ext {
-	case ".gltf":
-		return LoadGLTF(path)
-	}
-	return nil, fmt.Errorf("unsupported mesh format: %s (only GLTF is supported)", ext)
 }
 
 func LoadImage(path string) (image.Image, error) {

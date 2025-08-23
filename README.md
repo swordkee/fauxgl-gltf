@@ -1,6 +1,6 @@
 # FauxGL-GLTF - 专业GLTF渲染引擎
 
-FauxGL-GLTF 是一个专门针对GLTF格式优化的纯Go语言3D渲染引擎，支持完整的物理基础渲染(PBR)、高级材质系统、场景管理和动画播放。
+FauxGL-GLTF 是一个专门针对GLTF格式优化的纯Go语言3D渲染引擎，支持完整的物理基础渲染(PBR)、高级材质系统、场景管理和动画播放，代码大部由[Goder](https://qoder.com)编写，基于[FauxGL](https://github.com/fogleman/fauxgl)开发。
 
 ## 特色功能
 
@@ -25,12 +25,71 @@ FauxGL-GLTF 是一个专门针对GLTF格式优化的纯Go语言3D渲染引擎，
   - 遮蔽贴图 (Occlusion Maps)
   - 自发光 (Emissive)
 
+### 🎨 动态UV映射系统 🆕
+
+- **智能UV修改器**: 支持实时UV坐标变换
+- **多层变换效果**: 缩放、旋转、偏移、剪切变换
+- **区域化映射**: 矩形、圆形、渐变遮罩系统
+- **多种混合模式**: 替换、加法、乘法、叠加模式
+- **部分区域贴图**: 支持杯子等模型的局部纹理应用
+- **动画UV效果**: 时间管理和动态变换
+- **智能纹理选择**: 自动回退机制和内容验证
+
+#### UV修改器使用示例
+
+**基础UV变换**:
+```go
+// 创建UV修改器
+modifier := fauxgl.NewUVModifier()
+// 设置全局变换
+globalTransform := fauxgl.NewUVTransform()
+globalTransform.ScaleU = 2.0
+globalTransform.ScaleV = 1.5
+globalTransform.Rotation = math.Pi / 4 // 45度旋转
+modifier.SetGlobalTransform(globalTransform)
+// 应用到纹理
+texture.UVModifier = modifier
+```
+
+**部分区域贴图**:
+```go
+// 创建前面板标志区域
+frontLogoMapping := &fauxgl.UVMapping{
+    Name:    "front_logo_area",
+    Enabled: true,
+    Region: fauxgl.UVRegion{
+        MinU: 0.25, MaxU: 0.75,
+        MinV: 0.35, MaxV: 0.65,
+        MaskType: fauxgl.UVMaskRectangle,
+    },
+    Transform: &fauxgl.UVTransform{
+        ScaleU: 0.8, ScaleV: 0.6,
+    },
+    BlendMode: fauxgl.UVBlendReplace,
+    Priority:  2,
+}
+modifier.AddMapping(frontLogoMapping)
+```
+
+**智能纹理加载**:
+```go
+// 程序会按优先级自动加载纹理文件
+// 1. your_texture.jpg (用户自定义)
+// 2. custom_texture.jpg 
+// 3. logo_texture.png
+// 4. texture.png (回退选项)
+
+// 配置自定义纹理
+const CUSTOM_TEXTURE_FILE = "my_logo.jpg"
+```
+
 ### 🖼️ 高级纹理系统
 
 - **多种纹理类型**: 基础颜色、法线、金属度、粗糙度等
 - **纹理过滤**: 最近邻、双线性插值
 - **环绕模式**: 重复、夹取、镜像
 - **Mipmap支持**: 自动生成多级细节
+- **集成UV修改器**: 无缝集成到纹理采样流程 🆕
 
 ### 🎬 场景管理
 
@@ -75,8 +134,6 @@ scene.AddPointLight(                                            // 点光源
 scene.AddAmbientLight(fauxgl.Color{0.25, 0.27, 0.3, 1.0}, 0.4)
 // 窗户光
 scene.AddDirectionalLight(fauxgl.V(-0.5, -0.8, -0.3), fauxgl.Color{0.95, 0.9, 0.8, 1.0}, 3.0)
-// 室内灯光
-scene.AddPointLight(fauxgl.V(0, 2.5, 0), fauxgl.Color{1.0, 0.95, 0.8, 1.0}, 8.0, 15.0)
 ```
 
 **户外场景**:
@@ -94,6 +151,10 @@ scene.AddAmbientLight(fauxgl.Color{0.1, 0.15, 0.25, 1.0}, 0.2)
 // 月光主光源
 scene.AddDirectionalLight(fauxgl.V(-0.2, -0.9, -0.4), fauxgl.Color{0.7, 0.8, 1.0, 1.0}, 1.5)
 ```
+
+
+
+
 
 ## 快速开始
 
@@ -137,60 +198,31 @@ func main() {
 }
 ```
 
-### 自定义PBR材质
+### 自定义PBR材质和UV映射
 
 ```go
 // 创建自定义PBR材质
 material := fauxgl.NewPBRMaterial()
 material.BaseColorFactor = fauxgl.Color{0.8, 0.2, 0.2, 1.0} // 红色
 material.MetallicFactor = 0.8   // 高金属度
-material.RoughnessFactor = 0.2  // 低粗糙度（光滑）
+material.RoughnessFactor = 0.2  // 低粗糙度
 
 // 加载纹理
 baseColorTexture, _ := fauxgl.LoadAdvancedTexture("base_color.jpg", fauxgl.BaseColorTexture)
-normalTexture, _ := fauxgl.LoadAdvancedTexture("normal.jpg", fauxgl.NormalTexture)
 
-material.BaseColorTexture = baseColorTexture
-material.NormalTexture = normalTexture
+// 添加UV修改器
+modifier := fauxgl.NewUVModifier()
+globalTransform := fauxgl.NewUVTransform()
+globalTransform.ScaleU = 1.5
+globalTransform.ScaleV = 1.2
+modifier.SetGlobalTransform(globalTransform)
+baseColorTexture.UVModifier = modifier
 
 // 应用到场景节点
 node.Material = material
 ```
 
-### UV贴图和自定义渲染
 
-```go
-// 定义UV区域
-type UVRegion struct {
-    Name        string
-    MinU, MaxU  float64
-    MinV, MaxV  float64
-    Color       fauxgl.Color
-    TexturePath string
-    Enabled     bool
-}
-
-// 创建UV映射区域
-regions := []UVRegion{
-    {
-        Name:    "杯身主体",
-        MinU:    0.0, MaxU: 0.6,
-        MinV:    0.2, MaxV: 0.8,
-        Color:   fauxgl.Color{0.8, 0.3, 0.3, 1.0},
-        Enabled: true,
-    },
-    {
-        Name:    "杯口装饰",
-        MinU:    0.0, MaxU: 1.0,
-        MinV:    0.8, MaxV: 1.0,
-        Color:   fauxgl.Color{1.0, 0.8, 0.2, 1.0},
-        Enabled: true,
-    },
-}
-
-// 应用UV映射
-applyUVMapping(mesh, regions)
-```
 
 ## 运行示例
 
@@ -205,7 +237,7 @@ go run gltf_demo.go
 ### Mug模型渲染
 ```bash
 cd examples
-go run mug_gltf_enhanced.go
+go run mug.go
 ```
 
 ### PBR材质演示
@@ -217,7 +249,7 @@ go run pbr_demo.go
 ### 精确GLTF渲染
 ```bash
 cd examples
-go run mug_gltf_precise.go
+go run mug_uv.go
 ```
 
 ### 环境光功能演示
@@ -250,12 +282,25 @@ cd examples
 go run gltf_extensions_showcase.go
 ```
 
+### UV调试工具 🆕
+```bash
+cd examples
+go run debug_uv.go
+```
+
+### 部分区域贴图演示 🆕
+```bash
+cd examples
+go run mug_uv_final.go
+```
+
 ## 支持的GLTF特性
 
 ✅ **完全支持**:
 - GLTF 2.0格式
 - PBR材质 (Metallic-Roughness workflow)
 - 纹理映射 (Base Color, Normal, Metallic-Roughness)
+- **动态UV修改器**: 实时UV坐标变换和部分贴图 🆕
 - 场景层次结构
 - 网格几何体
 - 关键帧动画
@@ -263,6 +308,7 @@ go run gltf_extensions_showcase.go
 - **变形目标 (Morph Targets)** 🆕
 - 相机定义
 - 光源设置
+- **环境光功能 (AmbientLight)**: 支持均匀全局照明 🆕
 
 🚧 **部分支持**:
 - **GLTF扩展系统** 🆕 (21个扩展):
@@ -322,6 +368,8 @@ go run gltf_extensions_showcase.go
 - 无GPU环境的渲染
 - GLTF模型预览和转换
 - 教学和原型开发
+- **产品覆盖和标志定制**: 部分区域贴图 🆕
+- **动态纹理效果**: UV动画和变换 🆕
 
 ## API参考
 
@@ -355,6 +403,29 @@ type SceneNode struct {
     Mesh        *Mesh
     Material    *PBRMaterial
 }
+
+// UV修改器 🆕
+type UVModifier struct {
+    GlobalTransform *UVTransform
+    Mappings        []*UVMapping
+}
+
+type UVTransform struct {
+    OffsetU, OffsetV float64 // UV偏移
+    ScaleU, ScaleV   float64 // UV缩放
+    Rotation         float64 // 旋转角度
+    SkewU, SkewV     float64 // UV剪切
+    PivotU, PivotV   float64 // 旋转中心点
+}
+
+type UVMapping struct {
+    Name      string
+    Enabled   bool
+    Region    UVRegion
+    Transform *UVTransform
+    BlendMode UVBlendMode
+    Priority  int
+}
 ```
 
 ### 主要函数
@@ -362,7 +433,6 @@ type SceneNode struct {
 ```go
 // GLTF加载
 func LoadGLTFScene(path string) (*Scene, error)
-func LoadGLTF(path string) (*Mesh, error)
 
 // 场景渲染
 func NewSceneRenderer(context *Context) *SceneRenderer
@@ -371,6 +441,14 @@ func (r *SceneRenderer) RenderScene(scene *Scene)
 // 材质和纹理
 func NewPBRMaterial() *PBRMaterial
 func LoadAdvancedTexture(path string, textureType TextureType) (*AdvancedTexture, error)
+
+// UV修改器 🆕
+func NewUVModifier() *UVModifier
+func NewUVTransform() *UVTransform
+func (modifier *UVModifier) AddMapping(mapping *UVMapping)
+func (modifier *UVModifier) SetGlobalTransform(transform *UVTransform)
+func (modifier *UVModifier) TransformUV(u, v float64) (float64, float64)
+func ApplyUVModifierToMesh(mesh *Mesh, modifier *UVModifier)
 
 // 动画
 func NewAnimationPlayer() *AnimationPlayer
@@ -386,6 +464,17 @@ func (scene *Scene) GetLightsByType(lightType LightType) []Light
 ```
 
 ## 版本历史
+
+### v1.2.0 (UV映射系统版) 🆕
+- 🎨 **动态UV修改器**: 实时UV坐标变换系统
+- 🎯 **部分区域贴图**: 支持模型局部纹理应用
+- 🔄 **多层变换效果**: 缩放、旋转、偏移、剪切
+- 🔳 **区域化映射**: 矩形、圆形、渐变遮罩系统
+- 🌈 **多种混合模式**: 替换、加法、乘法、叠加
+- 🤖 **智能纹理选择**: 自动回退和内容验证
+- 🎥 **动画UV效果**: 时间管理和动态变换
+- 🛠️ **高质量渲染**: 支持300KB+大文件输出
+- 📝 **完整UV文档**: 附带详细使用指南
 
 ### v1.1.0 (高级特性版)
 - 🦾 **蒙皮动画支持**: 骨骼系统和关节矩阵
@@ -430,7 +519,7 @@ require (
 
 ## 支持
 
-- 📧 邮箱: support@example.com
+- 📧 邮箱: swordkee.zhu@gmail.com
 - 🐛 问题报告: [GitHub Issues](https://github.com/swordkee/fauxgl-gltf/issues)
 - 📖 文档: [Wiki](https://github.com/swordkee/fauxgl-gltf/wiki)
 

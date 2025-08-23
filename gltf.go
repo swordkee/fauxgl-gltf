@@ -64,24 +64,6 @@ type GLTFLoader struct {
 	scene *Scene
 }
 
-// LoadGLTF loads a GLTF file and returns only the mesh (legacy function)
-func LoadGLTF(path string) (*Mesh, error) {
-	scene, err := LoadGLTFScene(path)
-	if err != nil {
-		return nil, err
-	}
-
-	// Combine all meshes into one for backward compatibility
-	var allTriangles []*Triangle
-	scene.RootNode.VisitNodes(func(node *SceneNode) {
-		if node.Mesh != nil {
-			allTriangles = append(allTriangles, node.Mesh.Triangles...)
-		}
-	})
-
-	return NewTriangleMesh(allTriangles), nil
-}
-
 // loadTextures loads all textures from the GLTF document
 func (loader *GLTFLoader) loadTextures() error {
 	for i, texture := range loader.doc.Textures {
@@ -555,14 +537,4 @@ func (loader *GLTFLoader) loadMeshes() error {
 	}
 
 	return nil
-}
-
-// LoadGLTFWithMaterials loads a GLTF file and creates objects with PBR materials
-func LoadGLTFWithMaterials(path string) ([]*SceneNode, error) {
-	scene, err := LoadGLTFScene(path)
-	if err != nil {
-		return nil, err
-	}
-
-	return scene.RootNode.GetRenderableNodes(), nil
 }

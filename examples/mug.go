@@ -25,11 +25,20 @@ var (
 func main() {
 	fmt.Println("Loading mug.gltf using traditional method...")
 
-	// 使用传统方式加载GLTF（与原始mug.go相同）
-	mesh, err := fauxgl.LoadGLTF("mug.gltf")
+	// 使用GLTF场景加载器（更新的方法）
+	scene, err := fauxgl.LoadGLTFScene("mug.gltf")
 	if err != nil {
 		panic(err)
 	}
+
+	// 从场景中合并所有网格为单个网格（保持向后兼容）
+	var allTriangles []*fauxgl.Triangle
+	scene.RootNode.VisitNodes(func(node *fauxgl.SceneNode) {
+		if node.Mesh != nil {
+			allTriangles = append(allTriangles, node.Mesh.Triangles...)
+		}
+	})
+	mesh := fauxgl.NewTriangleMesh(allTriangles)
 
 	// 加载纹理
 	texture, err := fauxgl.LoadTexture("texture.jpg")
