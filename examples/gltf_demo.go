@@ -190,37 +190,37 @@ func createFallbackScene(mesh *fauxgl.Mesh, width, height int) *fauxgl.Scene {
 }
 
 // printSceneInfo prints information about the loaded scene
-func printSceneInfo(scene *fauxgl.Scene) {
-	fmt.Printf("=== Scene Information ===\n")
-	fmt.Printf("Scene Name: %s\n", scene.Name)
-	fmt.Printf("Cameras: %d\n", len(scene.Cameras))
-	fmt.Printf("Lights: %d\n", len(scene.Lights))
-	fmt.Printf("Materials: %d\n", len(scene.Materials))
-	fmt.Printf("Textures: %d\n", len(scene.Textures))
-	fmt.Printf("Meshes: %d\n", len(scene.Meshes))
-	fmt.Printf("Animations: %d\n", len(scene.Animations))
-
-	// Count renderable nodes
-	renderables := scene.RootNode.GetRenderableNodes()
-	fmt.Printf("Renderable nodes: %d\n", len(renderables))
-
-	// Scene bounds
-	bounds := scene.GetBounds()
-	fmt.Printf("Scene bounds: min=%v, max=%v\n", bounds.Min, bounds.Max)
-	fmt.Printf("Scene size: %v\n", bounds.Size())
-	fmt.Printf("Scene center: %v\n", bounds.Center())
-
-	// List materials
-	if len(scene.Materials) > 0 {
-		fmt.Printf("Materials:\n")
-		for name, material := range scene.Materials {
-			fmt.Printf("  - %s: metallic=%.2f, roughness=%.2f, baseColor=%v\n",
-				name, material.MetallicFactor, material.RoughnessFactor, material.BaseColorFactor)
-		}
-	}
-
-	fmt.Printf("========================\n\n")
-}
+//func printSceneInfo(scene *fauxgl.Scene) {
+//	fmt.Printf("=== Scene Information ===\n")
+//	fmt.Printf("Scene Name: %s\n", scene.Name)
+//	fmt.Printf("Cameras: %d\n", len(scene.Cameras))
+//	fmt.Printf("Lights: %d\n", len(scene.Lights))
+//	fmt.Printf("Materials: %d\n", len(scene.Materials))
+//	fmt.Printf("Textures: %d\n", len(scene.Textures))
+//	fmt.Printf("Meshes: %d\n", len(scene.Meshes))
+//	fmt.Printf("Animations: %d\n", len(scene.Animations))
+//
+//	// Count renderable nodes
+//	renderables := scene.RootNode.GetRenderableNodes()
+//	fmt.Printf("Renderable nodes: %d\n", len(renderables))
+//
+//	// Scene bounds
+//	bounds := scene.GetBounds()
+//	fmt.Printf("Scene bounds: min=%v, max=%v\n", bounds.Min, bounds.Max)
+//	fmt.Printf("Scene size: %v\n", bounds.Size())
+//	fmt.Printf("Scene center: %v\n", bounds.Center())
+//
+//	// List materials
+//	if len(scene.Materials) > 0 {
+//		fmt.Printf("Materials:\n")
+//		for name, material := range scene.Materials {
+//			fmt.Printf("  - %s: metallic=%.2f, roughness=%.2f, baseColor=%v\n",
+//				name, material.MetallicFactor, material.RoughnessFactor, material.BaseColorFactor)
+//		}
+//	}
+//
+//	fmt.Printf("========================\n\n")
+//}
 
 // animateCamera animates the camera around the scene
 func animateCamera(camera *fauxgl.Camera, bounds fauxgl.Box, time float64) {

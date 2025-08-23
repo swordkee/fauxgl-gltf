@@ -2,6 +2,7 @@ package fauxgl
 
 import (
 	"fmt"
+
 	"github.com/qmuntal/gltf"
 	"github.com/qmuntal/gltf/modeler"
 )
@@ -363,16 +364,38 @@ func (loader *GLTFLoader) loadNode(nodeIndex int, parent *SceneNode) (*SceneNode
 		node.SetTransform(transform)
 	}
 
-	// Assign mesh and material
+	// Assign mesh and material - create separate nodes for each primitive
 	if gltfNode.Mesh != nil {
-		meshName := fmt.Sprintf("mesh_%d", *gltfNode.Mesh)
-		node.Mesh = loader.scene.GetMesh(meshName)
+		meshIndex := *gltfNode.Mesh
+		gltfMesh := loader.doc.Meshes[meshIndex]
 
-		// For now, use the first material
-		if len(loader.scene.Materials) > 0 {
-			for _, material := range loader.scene.Materials {
-				node.Material = material
-				break
+		// 为每个primitive创建独立的子节点，实现正确的多材质UV分区
+		for j, primitive := range gltfMesh.Primitives {
+			meshName := fmt.Sprintf("mesh_%d_primitive_%d", meshIndex, j)
+			mesh := loader.scene.GetMesh(meshName)
+
+			if mesh != nil {
+				// 创建子节点
+				primitiveNodeName := fmt.Sprintf("%s_primitive_%d", nodeName, j)
+				primitiveNode := NewSceneNode(primitiveNodeName)
+				primitiveNode.Mesh = mesh
+
+				// 正确分配材质
+				if primitive.Material != nil {
+					materialName := fmt.Sprintf("material_%d", *primitive.Material)
+					primitiveNode.Material = loader.scene.GetMaterial(materialName)
+				} else {
+					// 默认材质
+					if len(loader.scene.Materials) > 0 {
+						for _, material := range loader.scene.Materials {
+							primitiveNode.Material = material
+							break
+						}
+					}
+				}
+
+				// 将primitive节点添加到主节点
+				node.AddChild(primitiveNode)
 			}
 		}
 	}
@@ -392,13 +415,12 @@ func (loader *GLTFLoader) loadNode(nodeIndex int, parent *SceneNode) (*SceneNode
 }
 
 // loadMeshes loads all meshes from the GLTF document
+// This version creates separate meshes for each primitive to support multi-material
 func (loader *GLTFLoader) loadMeshes() error {
 	for i, gltfMesh := range loader.doc.Meshes {
-		var triangles []*Triangle
-
-		// 遍历网格中的所有图元
-		for _, primitive := range gltfMesh.Primitives {
-			// 只处理三角形图元
+		// 为每个primitive创建独立的mesh，以支持多材质UV分区
+		for j, primitive := range gltfMesh.Primitives {
+			var triangles []*Triangle
 
 			// 获取顶点位置数据
 			positionAccessor := loader.doc.Accessors[primitive.Attributes[gltf.POSITION]]
@@ -442,17 +464,17 @@ func (loader *GLTFLoader) loadMeshes() error {
 			} else {
 				// 如果没有索引，则按顺序生成
 				indices = make([]uint32, len(positionBuffer))
-				for i := range indices {
-					indices[i] = uint32(i)
+				for k := range indices {
+					indices[k] = uint32(k)
 				}
 			}
 
 			// 将顶点数据转换为三角形
-			for i := 0; i < len(indices); i += 3 {
+			for k := 0; k < len(indices); k += 3 {
 				t := &Triangle{}
 
 				// 第一个顶点
-				i1 := indices[i]
+				i1 := indices[k]
 				t.V1.Position = Vector{
 					float64(positionBuffer[i1][0]),
 					float64(positionBuffer[i1][1]),
@@ -474,7 +496,7 @@ func (loader *GLTFLoader) loadMeshes() error {
 				}
 
 				// 第二个顶点
-				i2 := indices[i+1]
+				i2 := indices[k+1]
 				t.V2.Position = Vector{
 					float64(positionBuffer[i2][0]),
 					float64(positionBuffer[i2][1]),
@@ -496,7 +518,7 @@ func (loader *GLTFLoader) loadMeshes() error {
 				}
 
 				// 第三个顶点
-				i3 := indices[i+2]
+				i3 := indices[k+2]
 				t.V3.Position = Vector{
 					float64(positionBuffer[i3][0]),
 					float64(positionBuffer[i3][1]),
@@ -524,11 +546,12 @@ func (loader *GLTFLoader) loadMeshes() error {
 
 				triangles = append(triangles, t)
 			}
-		}
 
-		mesh := NewTriangleMesh(triangles)
-		meshName := fmt.Sprintf("mesh_%d", i)
-		loader.scene.AddMesh(meshName, mesh)
+			// 为每个primitive创建独立的mesh
+			mesh := NewTriangleMesh(triangles)
+			meshName := fmt.Sprintf("mesh_%d_primitive_%d", i, j)
+			loader.scene.AddMesh(meshName, mesh)
+		}
 	}
 
 	return nil

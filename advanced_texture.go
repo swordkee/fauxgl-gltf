@@ -77,6 +77,9 @@ type AdvancedTexture struct {
 	MagFilter TextureFilter
 	MipLevels []image.Image // For mipmap support
 	Transform Matrix        // Texture coordinate transformation
+
+	// **新增**: UV修改器支持
+	UVModifier *UVModifier // 动态UV修改器
 }
 
 // NewAdvancedTexture creates a new advanced texture from an image
@@ -130,6 +133,11 @@ func (t *AdvancedTexture) BilinearSample(u, v float64) Color {
 
 // SampleWithFilter samples the texture with specified filtering
 func (t *AdvancedTexture) SampleWithFilter(u, v float64, filter TextureFilter) Color {
+	// **新增**: 应用UV修改器变换
+	if t.UVModifier != nil {
+		u, v = t.UVModifier.TransformUV(u, v)
+	}
+
 	// Apply texture coordinate transformation
 	uv := Vector{u, v, 0}
 	transformedUV := t.Transform.MulPosition(uv)
