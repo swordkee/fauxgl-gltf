@@ -113,7 +113,7 @@ type Sampler struct {
 func main() {
 	if len(os.Args) < 2 {
 		fmt.Println("Usage: go run gltf_analyzer.go <path_to_gltf_file>")
-		fmt.Println("Example: go run gltf_analyzer.go examples/mug.gltf")
+		fmt.Println("Example: go run gltf_analyzer.go examples/./gltf/mug.gltf")
 		return
 	}
 

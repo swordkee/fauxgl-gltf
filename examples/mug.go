@@ -23,10 +23,10 @@ var (
 )
 
 func main() {
-	fmt.Println("Loading mug.gltf using traditional method...")
+	fmt.Println("Loading ./gltf/mug.gltf using traditional method...")
 
 	// 使用GLTF场景加载器（更新的方法）
-	scene, err := fauxgl.LoadGLTFScene("mug.gltf")
+	scene, err := fauxgl.LoadGLTFScene("./gltf/mug.gltf")
 	if err != nil {
 		panic(err)
 	}

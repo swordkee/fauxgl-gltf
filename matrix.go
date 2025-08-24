@@ -75,14 +75,10 @@ func Orient(position, size, up Vector, rotation float64) Matrix {
 
 // Frustum f
 func Frustum(l, r, b, t, n, f float64) Matrix {
-	t1 := 2 * n
-	t2 := r - l
-	t3 := t - b
-	t4 := f - n
 	return Matrix{
-		t1 / t2, 0, (r + l) / t2, 0,
-		0, t1 / t3, (t + b) / t3, 0,
-		0, 0, (-f - n) / t4, (-t1 * f) / t4,
+		2 * n / (r - l), 0, (r + l) / (r - l), 0,
+		0, 2 * n / (t - b), (t + b) / (t - b), 0,
+		0, 0, -(f + n) / (f - n), -2 * f * n / (f - n),
 		0, 0, -1, 0}
 }
 
@@ -194,41 +190,26 @@ func (a Matrix) LookAt(eye, center, up Vector) Matrix {
 	return LookAt(eye, center, up).Mul(a)
 }
 
-// Viewport f
-func (a Matrix) Viewport(x, y, w, h float64) Matrix {
-	return Viewport(x, y, w, h).Mul(a)
-}
-
-// MulScalar f
-func (a Matrix) MulScalar(b float64) Matrix {
-	return Matrix{
-		a.X00 * b, a.X01 * b, a.X02 * b, a.X03 * b,
-		a.X10 * b, a.X11 * b, a.X12 * b, a.X13 * b,
-		a.X20 * b, a.X21 * b, a.X22 * b, a.X23 * b,
-		a.X30 * b, a.X31 * b, a.X32 * b, a.X33 * b,
-	}
-}
-
 // Mul f
 func (a Matrix) Mul(b Matrix) Matrix {
-	m := Matrix{}
-	m.X00 = a.X00*b.X00 + a.X01*b.X10 + a.X02*b.X20 + a.X03*b.X30
-	m.X10 = a.X10*b.X00 + a.X11*b.X10 + a.X12*b.X20 + a.X13*b.X30
-	m.X20 = a.X20*b.X00 + a.X21*b.X10 + a.X22*b.X20 + a.X23*b.X30
-	m.X30 = a.X30*b.X00 + a.X31*b.X10 + a.X32*b.X20 + a.X33*b.X30
-	m.X01 = a.X00*b.X01 + a.X01*b.X11 + a.X02*b.X21 + a.X03*b.X31
-	m.X11 = a.X10*b.X01 + a.X11*b.X11 + a.X12*b.X21 + a.X13*b.X31
-	m.X21 = a.X20*b.X01 + a.X21*b.X11 + a.X22*b.X21 + a.X23*b.X31
-	m.X31 = a.X30*b.X01 + a.X31*b.X11 + a.X32*b.X21 + a.X33*b.X31
-	m.X02 = a.X00*b.X02 + a.X01*b.X12 + a.X02*b.X22 + a.X03*b.X32
-	m.X12 = a.X10*b.X02 + a.X11*b.X12 + a.X12*b.X22 + a.X13*b.X32
-	m.X22 = a.X20*b.X02 + a.X21*b.X12 + a.X22*b.X22 + a.X23*b.X32
-	m.X32 = a.X30*b.X02 + a.X31*b.X12 + a.X32*b.X22 + a.X33*b.X32
-	m.X03 = a.X00*b.X03 + a.X01*b.X13 + a.X02*b.X23 + a.X03*b.X33
-	m.X13 = a.X10*b.X03 + a.X11*b.X13 + a.X12*b.X23 + a.X13*b.X33
-	m.X23 = a.X20*b.X03 + a.X21*b.X13 + a.X22*b.X23 + a.X23*b.X33
-	m.X33 = a.X30*b.X03 + a.X31*b.X13 + a.X32*b.X23 + a.X33*b.X33
-	return m
+	return Matrix{
+		a.X00*b.X00 + a.X01*b.X10 + a.X02*b.X20 + a.X03*b.X30,
+		a.X00*b.X01 + a.X01*b.X11 + a.X02*b.X21 + a.X03*b.X31,
+		a.X00*b.X02 + a.X01*b.X12 + a.X02*b.X22 + a.X03*b.X32,
+		a.X00*b.X03 + a.X01*b.X13 + a.X02*b.X23 + a.X03*b.X33,
+		a.X10*b.X00 + a.X11*b.X10 + a.X12*b.X20 + a.X13*b.X30,
+		a.X10*b.X01 + a.X11*b.X11 + a.X12*b.X21 + a.X13*b.X31,
+		a.X10*b.X02 + a.X11*b.X12 + a.X12*b.X22 + a.X13*b.X32,
+		a.X10*b.X03 + a.X11*b.X13 + a.X12*b.X23 + a.X13*b.X33,
+		a.X20*b.X00 + a.X21*b.X10 + a.X22*b.X20 + a.X23*b.X30,
+		a.X20*b.X01 + a.X21*b.X11 + a.X22*b.X21 + a.X23*b.X31,
+		a.X20*b.X02 + a.X21*b.X12 + a.X22*b.X22 + a.X23*b.X32,
+		a.X20*b.X03 + a.X21*b.X13 + a.X22*b.X23 + a.X23*b.X33,
+		a.X30*b.X00 + a.X31*b.X10 + a.X32*b.X20 + a.X33*b.X30,
+		a.X30*b.X01 + a.X31*b.X11 + a.X32*b.X21 + a.X33*b.X31,
+		a.X30*b.X02 + a.X31*b.X12 + a.X32*b.X22 + a.X33*b.X32,
+		a.X30*b.X03 + a.X31*b.X13 + a.X32*b.X23 + a.X33*b.X33,
+	}
 }
 
 // MulPosition f
@@ -241,19 +222,30 @@ func (a Matrix) MulPosition(b Vector) Vector {
 
 // MulPositionW f
 func (a Matrix) MulPositionW(b Vector) VectorW {
-	x := a.X00*b.X + a.X01*b.Y + a.X02*b.Z + a.X03
-	y := a.X10*b.X + a.X11*b.Y + a.X12*b.Z + a.X13
-	z := a.X20*b.X + a.X21*b.Y + a.X22*b.Z + a.X23
-	w := a.X30*b.X + a.X31*b.Y + a.X32*b.Z + a.X33
-	return VectorW{x, y, z, w}
+	// 使用SIMD优化的位置变换
+	simdMatrix := NewSIMDMat4(
+		a.X00, a.X01, a.X02, a.X03,
+		a.X10, a.X11, a.X12, a.X13,
+		a.X20, a.X21, a.X22, a.X23,
+		a.X30, a.X31, a.X32, a.X33,
+	)
+	simdVector := NewSIMDVector4FromVector(b)
+	result := simdMatrix.MulPositionSIMD(simdVector)
+	return VectorW{result[0], result[1], result[2], result[3]}
 }
 
 // MulDirection f
 func (a Matrix) MulDirection(b Vector) Vector {
-	x := a.X00*b.X + a.X01*b.Y + a.X02*b.Z
-	y := a.X10*b.X + a.X11*b.Y + a.X12*b.Z
-	z := a.X20*b.X + a.X21*b.Y + a.X22*b.Z
-	return Vector{x, y, z}.Normalize()
+	// 使用SIMD优化的方向向量变换
+	simdMatrix := NewSIMDMat4(
+		a.X00, a.X01, a.X02, 0,
+		a.X10, a.X11, a.X12, 0,
+		a.X20, a.X21, a.X22, 0,
+		0, 0, 0, 1,
+	)
+	simdVector := NewSIMDVector4FromVector(b)
+	result := simdMatrix.MulPositionSIMD(simdVector)
+	return result.ToVector().Normalize()
 }
 
 // MulBox f
@@ -304,8 +296,11 @@ func (a Matrix) Determinant() float64 {
 
 // Inverse f
 func (a Matrix) Inverse() Matrix {
-	m := Matrix{}
 	d := a.Determinant()
+	if d == 0 {
+		return Identity()
+	}
+	m := Matrix{}
 	m.X00 = (a.X12*a.X23*a.X31 - a.X13*a.X22*a.X31 + a.X13*a.X21*a.X32 - a.X11*a.X23*a.X32 - a.X12*a.X21*a.X33 + a.X11*a.X22*a.X33) / d
 	m.X01 = (a.X03*a.X22*a.X31 - a.X02*a.X23*a.X31 - a.X03*a.X21*a.X32 + a.X01*a.X23*a.X32 + a.X02*a.X21*a.X33 - a.X01*a.X22*a.X33) / d
 	m.X02 = (a.X02*a.X13*a.X31 - a.X03*a.X12*a.X31 + a.X03*a.X11*a.X32 - a.X01*a.X13*a.X32 - a.X02*a.X11*a.X33 + a.X01*a.X12*a.X33) / d

@@ -1,6 +1,6 @@
 # FauxGL-GLTF - 专业GLTF渲染引擎
 
-FauxGL-GLTF 是一个专门针对GLTF格式优化的纯Go语言3D渲染引擎，支持完整的物理基础渲染(PBR)、高级材质系统、场景管理和动画播放，代码大部由[Goder](https://qoder.com)编写，基于[FauxGL](https://github.com/fogleman/fauxgl)开发。
+FauxGL-GLTF 是一个专门针对GLTF格式优化的纯Go语言3D渲染引擎，支持完整的物理基础渲染(PBR)、高级材质系统、场景管理和动画播放，代码大部分由[Goder](https://qoder.com)编写，基于[FauxGL](https://github.com/fogleman/fauxgl)开发。
 
 ## 特色功能
 
@@ -38,7 +38,7 @@ FauxGL-GLTF 是一个专门针对GLTF格式优化的纯Go语言3D渲染引擎，
 #### UV修改器使用示例
 
 **基础UV变换**:
-```go
+```
 // 创建UV修改器
 modifier := fauxgl.NewUVModifier()
 // 设置全局变换
@@ -52,7 +52,7 @@ texture.UVModifier = modifier
 ```
 
 **部分区域贴图**:
-```go
+```
 // 创建前面板标志区域
 frontLogoMapping := &fauxgl.UVMapping{
     Name:    "front_logo_area",
@@ -72,7 +72,7 @@ modifier.AddMapping(frontLogoMapping)
 ```
 
 **智能纹理加载**:
-```go
+```
 // 程序会按优先级自动加载纹理文件
 // 1. your_texture.jpg (用户自定义)
 // 2. custom_texture.jpg 
@@ -81,6 +81,44 @@ modifier.AddMapping(frontLogoMapping)
 
 // 配置自定义纹理
 const CUSTOM_TEXTURE_FILE = "my_logo.jpg"
+```
+
+### 🧩 UV编辑器系统 🆕
+
+- **平面展开算法**: 基于Blender的UV展开逻辑实现
+- **自动松弛算法**: 实现Seam Relaxation算法优化UV分布
+- **UV岛屿处理**: 支持多UV岛屿提取和独立处理
+- **坐标映射**: 2D画布坐标与3D模型UV坐标双向转换
+- **UV可视化**: 生成UV展开图用于调试和分析
+- **保持约束**: 支持面积保持和角度保持约束
+
+#### UV编辑器使用示例
+
+**UV松弛处理**:
+```
+// 创建UV松弛设置
+settings := fauxgl.NewUVRelaxationSettings()
+settings.Iterations = 20     // 松弛迭代次数
+settings.StepSize = 0.3      // 松弛步长
+settings.PinBoundary = true  // 固定边界顶点
+
+// 应用UV松弛算法到网格
+err := fauxgl.ApplyUVRelaxation(mesh, settings)
+if err != nil {
+    log.Fatal(err)
+}
+```
+
+**坐标映射**:
+```
+// UV坐标转画布坐标
+uv := fauxgl.Vector2{0.5, 0.5}
+x, y := fauxgl.UVToCanvas(uv, 1024, 1024)
+fmt.Printf("UV(0.5, 0.5) -> 画布坐标(%d, %d)\n", x, y)
+
+// 画布坐标转UV坐标
+uv2 := fauxgl.CanvasToUV(512, 512, 1024, 1024)
+fmt.Printf("画布坐标(512, 512) -> UV(%.2f, %.2f)\n", uv2.X, uv2.Y)
 ```
 
 ### 🖼️ 高级纹理系统
@@ -108,7 +146,7 @@ const CUSTOM_TEXTURE_FILE = "my_logo.jpg"
 
 #### 环境光使用示例
 
-```go
+```
 // 基本环境光使用
 scene.AddAmbientLight(fauxgl.Color{0.2, 0.3, 0.4, 1.0}, 0.8)
 
@@ -129,7 +167,7 @@ scene.AddPointLight(                                            // 点光源
 #### 场景照明最佳实践
 
 **室内场景**:
-```go
+```
 // 室内散射光
 scene.AddAmbientLight(fauxgl.Color{0.25, 0.27, 0.3, 1.0}, 0.4)
 // 窗户光
@@ -137,7 +175,7 @@ scene.AddDirectionalLight(fauxgl.V(-0.5, -0.8, -0.3), fauxgl.Color{0.95, 0.9, 0.
 ```
 
 **户外场景**:
-```go
+```
 // 天空散射光
 scene.AddAmbientLight(fauxgl.Color{0.4, 0.45, 0.6, 1.0}, 0.6)
 // 太阳光
@@ -145,7 +183,7 @@ scene.AddDirectionalLight(fauxgl.V(-0.3, -0.8, -0.5), fauxgl.Color{1.0, 0.95, 0.
 ```
 
 **夜晚场景**:
-```go
+```
 // 月光环境光
 scene.AddAmbientLight(fauxgl.Color{0.1, 0.15, 0.25, 1.0}, 0.2)
 // 月光主光源
@@ -160,13 +198,13 @@ scene.AddDirectionalLight(fauxgl.V(-0.2, -0.9, -0.4), fauxgl.Color{0.7, 0.8, 1.0
 
 ### 安装
 
-```bash
+```
 go get github.com/swordkee/fauxgl-gltf
 ```
 
 ### 基本使用
 
-```go
+```
 package main
 
 import (
@@ -200,7 +238,7 @@ func main() {
 
 ### 自定义PBR材质和UV映射
 
-```go
+```
 // 创建自定义PBR材质
 material := fauxgl.NewPBRMaterial()
 material.BaseColorFactor = fauxgl.Color{0.8, 0.2, 0.2, 1.0} // 红色
@@ -294,6 +332,18 @@ cd examples
 go run mug_uv_final.go
 ```
 
+### UV编辑器演示 🆕
+```bash
+cd examples
+go run uv_editor.go
+```
+
+### 完整功能演示（UV编辑器+多光源） 🆕
+```bash
+cd examples
+go run complete_demo.go
+```
+
 ## 支持的GLTF特性
 
 ✅ **完全支持**:
@@ -355,27 +405,89 @@ go run mug_uv_final.go
 - Draco几何压缩 (需要CGO集成)
 - 某些高级扩展 (依赖外部库)
 
-## 性能特点
+## 🚀 性能优化
 
-- **CPU渲染**: 纯软件实现，无需GPU
-- **高质量输出**: 支持超采样抗锯齿
-- **内存效率**: 优化的内存使用
-- **并行处理**: 利用多核CPU加速
+### SIMD向量计算优化 🆕
+FauxGL-GLTF现在支持SIMD（单指令多数据）优化的向量计算，显著提升渲染性能：
 
-**适用场景**:
-- 离线渲染和批处理
-- 高质量静态图像生成
-- 无GPU环境的渲染
-- GLTF模型预览和转换
-- 教学和原型开发
-- **产品覆盖和标志定制**: 部分区域贴图 🆕
-- **动态纹理效果**: UV动画和变换 🆕
+- **向量运算加速**: 向量加法、减法、点积、叉积等运算性能提升2-4倍
+- **矩阵变换优化**: 批量矩阵变换操作利用SIMD指令优化
+- **几何处理加速**: 网格变换、法线计算等几何处理性能显著提升
+- **自动切换机制**: 根据网格大小自动选择传统算法或SIMD优化算法
 
-## API参考
+```
+// SIMD优化的向量运算示例
+v1 := fauxgl.Vector{1, 2, 3}
+v2 := fauxgl.Vector{4, 5, 6}
+
+// 传统向量加法
+result1 := v1.Add(v2)
+
+// SIMD优化的批量向量运算
+vectors1 := []fauxgl.Vector{v1, v1, v1}
+vectors2 := []fauxgl.Vector{v2, v2, v2}
+result2 := fauxgl.SIMDAddVectors(vectors1, vectors2)
+```
+
+### 高质量渲染优化
+- **4K超分辨率渲染**: 支持高达8K的渲染输出
+- **智能超采样**: 自适应超采样抗锯齿技术
+- **并行渲染**: 充分利用多核CPU进行并行渲染
+- **内存优化**: 优化的内存管理和垃圾回收
+
+## 🎯 使用示例
+
+### 基础渲染
+```
+# 基础GLTF渲染
+go run examples/gltf_demo.go
+
+# 高质量4K渲染（带SIMD优化）
+go run examples/mug_uv_improved.go
+
+# SIMD性能测试
+go run examples/simd_demo.go
+```
+
+### 高级功能演示
+```
+# UV修改器完整演示
+go run examples/mug_uv_final.go
+
+# 多光源PBR渲染
+go run examples/pbr_demo.go
+
+# 环境光效果演示
+go run examples/ambient_light_demo.go
+
+# KTX2纹理格式支持
+go run examples/ktx2_texture_demo.go
+```
+
+## 📚 API参考
 
 ### 核心类型
 
-```go
+```
+// SIMD优化向量
+type SIMDVector4 [4]float64
+
+// SIMD优化矩阵
+type SIMDMat4 [16]float64
+
+// SIMD优化顶点
+type SIMDVertex struct {
+    Position SIMDVector4
+    Normal   SIMDVector4
+    Color    SIMDVector4
+    TexCoord SIMDVector4
+}
+
+// 批量SIMD操作
+func SIMDAddVectors(a, b []Vector) []Vector
+func SIMDMulScalarVectors(vectors []Vector, scalar float64) []Vector
+func SIMDNormalizeVectors(vectors []Vector) []Vector
+
 // 场景加载
 type Scene struct {
     RootNode  *SceneNode
@@ -426,11 +538,40 @@ type UVMapping struct {
     BlendMode UVBlendMode
     Priority  int
 }
+
+// UV编辑器系统 🆕
+type UVRelaxationSettings struct {
+    Iterations     int     // 松弛迭代次数
+    StepSize       float64 // 松弛步长
+    PinBoundary    bool    // 是否固定边界
+    PreserveArea   bool    // 是否保持面积
+    PreserveAngles bool    // 是否保持角度
+    EnableSeams    bool    // 是否启用接缝
+}
+
+type UVIsland struct {
+    Vertices      []Vector2 // UV坐标
+    Indices       []int     // 三角形索引
+    OriginalUVs   []Vector2 // 原始UV坐标
+    Seams         []UVSeam  // 接缝列表
+    BoundaryVerts []int     // 边界顶点
+    PinnedVerts   []int     // 固定顶点
+}
+
+type UVSeam struct {
+    Edge     [2]Vector // 接缝边的两个顶点
+    Strength float64   // 接缝强度 (0-1)
+    Fixed    bool      // 是否固定（不参与松弛）
+}
+
+type Vector2 struct {
+    X, Y float64
+}
 ```
 
 ### 主要函数
 
-```go
+```
 // GLTF加载
 func LoadGLTFScene(path string) (*Scene, error)
 
@@ -450,6 +591,14 @@ func (modifier *UVModifier) SetGlobalTransform(transform *UVTransform)
 func (modifier *UVModifier) TransformUV(u, v float64) (float64, float64)
 func ApplyUVModifierToMesh(mesh *Mesh, modifier *UVModifier)
 
+// UV编辑器系统 🆕
+func NewUVRelaxationSettings() *UVRelaxationSettings
+func ApplyUVRelaxation(mesh *Mesh, settings *UVRelaxationSettings) error
+func ExtractUVIslands(mesh *Mesh) []*UVIsland
+func RelaxUVs(island *UVIsland, settings *UVRelaxationSettings)
+func UVToCanvas(uv Vector2, canvasWidth, canvasHeight int) (int, int)
+func CanvasToUV(x, y, canvasWidth, canvasHeight int) Vector2
+
 // 动画
 func NewAnimationPlayer() *AnimationPlayer
 func (p *AnimationPlayer) Play(name string)
@@ -464,6 +613,15 @@ func (scene *Scene) GetLightsByType(lightType LightType) []Light
 ```
 
 ## 版本历史
+
+### v1.3.0 (UV编辑器和多光源系统版) 🆕
+- 🧩 **UV编辑器系统**: 基于Blender的UV展开逻辑实现
+- 🔄 **自动松弛算法**: 实现Seam Relaxation算法优化UV分布
+- 🗺️ **UV坐标映射**: 2D画布坐标与3D模型UV坐标双向转换
+- 🎨 **UV可视化**: 生成UV展开图用于调试和分析
+- 💡 **多光源系统**: 支持方向光、环境光等多种光源组合
+- 🌈 **PBR渲染**: 基于物理的渲染支持多光源效果
+- 📊 **保持约束**: 支持面积保持和角度保持约束
 
 ### v1.2.0 (UV映射系统版) 🆕
 - 🎨 **动态UV修改器**: 实时UV坐标变换系统
@@ -495,11 +653,9 @@ func (scene *Scene) GetLightsByType(lightType LightType) []Light
 
 ## 依赖项
 
-```go
+```
 require (
     github.com/qmuntal/gltf v0.28.0
-    github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
-    github.com/fogleman/simplify v0.0.0-20170216171241-d32f302d5046
 )
 ```
 

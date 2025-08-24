@@ -52,7 +52,7 @@ func testTextureUVModifier() {
 	fmt.Println("\n--- 测试纹理UV修改器 ---")
 
 	// 加载场景
-	scene, err := fauxgl.LoadGLTFScene("mug.gltf")
+	scene, err := fauxgl.LoadGLTFScene("./gltf/mug.gltf")
 	if err != nil {
 		panic(err)
 	}

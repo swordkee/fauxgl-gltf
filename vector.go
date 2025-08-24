@@ -23,7 +23,9 @@ func (a Vector) IsDegenerate() bool {
 }
 
 func (a Vector) Length() float64 {
-	return math.Sqrt(a.X*a.X + a.Y*a.Y + a.Z*a.Z)
+	// 使用SIMD优化的长度计算
+	sv := NewSIMDVector4FromVector(a)
+	return sv.Length()
 }
 
 func (a Vector) Less(b Vector) bool {
@@ -37,7 +39,8 @@ func (a Vector) Less(b Vector) bool {
 }
 
 func (a Vector) Distance(b Vector) float64 {
-	return a.Sub(b).Length()
+	// 使用SIMD优化的距离计算
+	return SIMDVectorDistance(a, b)
 }
 
 func (a Vector) LengthSquared() float64 {
@@ -49,7 +52,11 @@ func (a Vector) DistanceSquared(b Vector) float64 {
 }
 
 func (a Vector) Lerp(b Vector, t float64) Vector {
-	return a.Add(b.Sub(a).MulScalar(t))
+	// 使用SIMD优化的线性插值
+	sv1 := NewSIMDVector4FromVector(a)
+	sv2 := NewSIMDVector4FromVector(b)
+	diff := sv2.Sub(sv1).MulScalar(t)
+	return sv1.Add(diff).ToVector()
 }
 
 func (a Vector) LerpDistance(b Vector, d float64) Vector {
@@ -57,19 +64,19 @@ func (a Vector) LerpDistance(b Vector, d float64) Vector {
 }
 
 func (a Vector) Dot(b Vector) float64 {
-	return a.X*b.X + a.Y*b.Y + a.Z*b.Z
+	// 使用SIMD优化的点积计算
+	return SIMDVectorDot(a, b)
 }
 
 func (a Vector) Cross(b Vector) Vector {
-	x := a.Y*b.Z - a.Z*b.Y
-	y := a.Z*b.X - a.X*b.Z
-	z := a.X*b.Y - a.Y*b.X
-	return Vector{x, y, z}
+	// 使用SIMD优化的叉积计算
+	return SIMDVectorCross(a, b)
 }
 
 func (a Vector) Normalize() Vector {
-	r := 1 / math.Sqrt(a.X*a.X+a.Y*a.Y+a.Z*a.Z)
-	return Vector{a.X * r, a.Y * r, a.Z * r}
+	// 使用SIMD优化的归一化
+	sv := NewSIMDVector4FromVector(a)
+	return sv.Normalize().ToVector()
 }
 
 func (a Vector) Negate() Vector {
@@ -81,11 +88,15 @@ func (a Vector) Abs() Vector {
 }
 
 func (a Vector) Add(b Vector) Vector {
-	return Vector{a.X + b.X, a.Y + b.Y, a.Z + b.Z}
+	// 使用SIMD优化的向量加法
+	return SIMDAddVectors([]Vector{a}, []Vector{b})[0]
 }
 
 func (a Vector) Sub(b Vector) Vector {
-	return Vector{a.X - b.X, a.Y - b.Y, a.Z - b.Z}
+	// 使用SIMD优化的向量减法
+	sv1 := NewSIMDVector4FromVector(a)
+	sv2 := NewSIMDVector4FromVector(b)
+	return sv1.Sub(sv2).ToVector()
 }
 
 func (a Vector) Mul(b Vector) Vector {
@@ -94,14 +105,6 @@ func (a Vector) Mul(b Vector) Vector {
 
 func (a Vector) Div(b Vector) Vector {
 	return Vector{a.X / b.X, a.Y / b.Y, a.Z / b.Z}
-}
-
-func (a Vector) Mod(b Vector) Vector {
-	// as implemented in GLSL
-	x := a.X - b.X*math.Floor(a.X/b.X)
-	y := a.Y - b.Y*math.Floor(a.Y/b.Y)
-	z := a.Z - b.Z*math.Floor(a.Z/b.Z)
-	return Vector{x, y, z}
 }
 
 func (a Vector) AddScalar(b float64) Vector {
@@ -113,7 +116,8 @@ func (a Vector) SubScalar(b float64) Vector {
 }
 
 func (a Vector) MulScalar(b float64) Vector {
-	return Vector{a.X * b, a.Y * b, a.Z * b}
+	// 使用SIMD优化的标量乘法
+	return SIMDMulScalarVectors([]Vector{a}, b)[0]
 }
 
 func (a Vector) DivScalar(b float64) Vector {
@@ -125,11 +129,17 @@ func (a Vector) PowScalar(b float64) Vector {
 }
 
 func (a Vector) Min(b Vector) Vector {
-	return Vector{math.Min(a.X, b.X), math.Min(a.Y, b.Y), math.Min(a.Z, b.Z)}
+	// 使用SIMD优化的分量最小值
+	sv1 := NewSIMDVector4FromVector(a)
+	sv2 := NewSIMDVector4FromVector(b)
+	return sv1.Min(sv2).ToVector()
 }
 
 func (a Vector) Max(b Vector) Vector {
-	return Vector{math.Max(a.X, b.X), math.Max(a.Y, b.Y), math.Max(a.Z, b.Z)}
+	// 使用SIMD优化的分量最大值
+	sv1 := NewSIMDVector4FromVector(a)
+	sv2 := NewSIMDVector4FromVector(b)
+	return sv1.Max(sv2).ToVector()
 }
 
 func (a Vector) Floor() Vector {
@@ -186,37 +196,4 @@ func (a Vector) SegmentDistance(v Vector, w Vector) float64 {
 		return a.Distance(w)
 	}
 	return v.Add(w.Sub(v).MulScalar(t)).Distance(a)
-}
-
-type VectorW struct {
-	X, Y, Z, W float64
-}
-
-func (a VectorW) Vector() Vector {
-	return Vector{a.X, a.Y, a.Z}
-}
-
-func (a VectorW) Outside() bool {
-	x, y, z, w := a.X, a.Y, a.Z, a.W
-	return x < -w || x > w || y < -w || y > w || z < -w || z > w
-}
-
-func (a VectorW) Dot(b VectorW) float64 {
-	return a.X*b.X + a.Y*b.Y + a.Z*b.Z + a.W*b.W
-}
-
-func (a VectorW) Add(b VectorW) VectorW {
-	return VectorW{a.X + b.X, a.Y + b.Y, a.Z + b.Z, a.W + b.W}
-}
-
-func (a VectorW) Sub(b VectorW) VectorW {
-	return VectorW{a.X - b.X, a.Y - b.Y, a.Z - b.Z, a.W - b.W}
-}
-
-func (a VectorW) MulScalar(b float64) VectorW {
-	return VectorW{a.X * b, a.Y * b, a.Z * b, a.W * b}
-}
-
-func (a VectorW) DivScalar(b float64) VectorW {
-	return VectorW{a.X / b, a.Y / b, a.Z / b, a.W / b}
 }
