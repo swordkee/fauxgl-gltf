@@ -121,6 +121,151 @@ uv2 := fauxgl.CanvasToUV(512, 512, 1024, 1024)
 fmt.Printf("画布坐标(512, 512) -> UV(%.2f, %.2f)\n", uv2.X, uv2.Y)
 ```
 
+### 🌒 阴影映射系统 🆕
+
+- **完整阴影映射实现**: 支持多种阴影技术
+- **PCF软阴影**: Percentage Closer Filtering实现柔和阴影边缘
+- **PCSS高级软阴影**: Percentage Closer Soft Shadows实现真实感阴影
+- **级联阴影映射**: 支持大场景的高质量阴影渲染
+- **全向阴影映射**: 支持点光源的360度阴影
+- **多种阴影算法**: 简单阴影、PCF、PCSS等多种技术可选
+
+#### 阴影映射使用示例
+
+```
+// 创建阴影渲染器
+shadowRenderer := fauxgl.NewShadowMapRenderer(context, 1024, light, fauxgl.PCFShadow)
+shadowMap := shadowRenderer.GenerateShadowMap(scene)
+
+// 创建阴影接收着色器
+shadowShader := fauxgl.NewSoftShadowReceiverShader(
+    finalMatrix,
+    lightMatrix,
+    light.Direction,
+    camera.Position,
+    shadowMap,
+    fauxgl.PCFShadow,
+)
+
+// 应用阴影着色器进行渲染
+context.Shader = shadowShader
+context.DrawMesh(node.Mesh)
+```
+
+### 🌈 后期处理效果系统 🆕
+
+- **完整的后期处理管线**: 支持效果链式处理
+- **辉光效果**: Bloom效果增强高光区域
+- **模糊效果**: 高斯模糊实现景深和运动模糊
+- **色调映射**: Reinhard色调映射实现HDR效果
+- **FXAA抗锯齿**: 快速近似抗锯齿减少锯齿
+- **色差效果**: Chromatic Aberration模拟镜头色散
+- **暗角效果**: Vignette增强画面氛围
+- **颜色分级**: 色调、饱和度、亮度调整
+
+#### 后期处理使用示例
+
+```
+// 创建后期处理管线
+pipeline := fauxgl.NewPostProcessingPipeline()
+
+// 添加多种效果
+bloomEffect := fauxgl.NewBloomEffect(0.7, 3, 0.5)
+pipeline.AddEffect(bloomEffect)
+
+toneMapEffect := fauxgl.NewToneMappingEffect(1.0, 2.2)
+pipeline.AddEffect(toneMapEffect)
+
+fxaaEffect := fauxgl.NewFXAAEffect()
+pipeline.AddEffect(fxaaEffect)
+
+// 应用后期处理
+result := pipeline.Process(context.Image())
+```
+
+### 🎥 增强相机系统 🆕
+
+- **多种相机类型**: 透视相机、正交相机
+- **轨道相机控制器**: 围绕目标旋转的相机控制
+- **第一人称相机**: FPS风格的相机控制
+- **视锥体剔除**: 自动剔除不可见对象提升性能
+- **多相机支持**: 场景中可同时存在多个相机
+
+#### 相机系统使用示例
+
+```
+// 创建轨道相机
+camera := fauxgl.NewOrbitCamera(
+    "orbit_camera",
+    fauxgl.Vector{0, 0, 0}, // 目标点
+    8.0,                    // 距离
+    math.Pi/4,              // 45度视野
+    float64(width)/float64(height),
+    0.1, 100.0,
+)
+
+// 相机控制
+camera.Rotate(0.2, 0.05) // 旋转相机
+camera.Zoom(-0.5)        // 缩放相机
+```
+
+### 🧱 更多几何体类型 🆕
+
+- **丰富几何体库**: 立方体、球体、圆锥体、圆柱体、平面、圆环体、胶囊体
+- **几何体细分**: 支持网格细分提升模型质量
+- **网格平滑**: 顶点平均算法实现网格平滑
+- **参数化几何体**: 可自定义参数生成几何体
+
+#### 几何体使用示例
+
+```
+// 创建各种几何体
+cube := fauxgl.NewCube()
+sphere := fauxgl.NewSphere(4)
+cylinder := fauxgl.NewCylinder(0.5, 1.0, 16, 1, false)
+torus := fauxgl.NewTorus(1.0, 0.3, 20, 12)
+capsule := fauxgl.NewCapsule(0.5, 1.5, 12, 1, 2)
+
+// 几何体操作
+subdivided := sphere.Subdivide() // 细分球体
+smoothed := mesh.Smooth(3)       // 平滑网格
+```
+
+### 🧠 着色器材质系统 🆕
+
+- **可编程着色器**: 支持自定义顶点和片段着色器
+- **PBR着色器**: 基于物理的渲染着色器
+- **自定义效果着色器**: 支持创建特殊视觉效果
+- **着色器接口**: 统一的着色器编程接口
+
+#### 自定义着色器示例
+
+```
+// 自定义着色器结构体
+type CustomShader struct {
+    Matrix         fauxgl.Matrix
+    LightDirection fauxgl.Vector
+    CameraPosition fauxgl.Vector
+    Time           float64
+}
+
+// 实现顶点着色器
+func (shader *CustomShader) Vertex(v fauxgl.Vertex) fauxgl.Vertex {
+    v.Output = shader.Matrix.MulPositionW(v.Position)
+    return v
+}
+
+// 实现片段着色器
+func (shader *CustomShader) Fragment(v fauxgl.Vertex) fauxgl.Color {
+    // 基于时间的颜色变化
+    red := 0.5 + 0.5*math.Sin(shader.Time+v.Position.X)
+    green := 0.5 + 0.5*math.Sin(shader.Time*1.2+v.Position.Y)
+    blue := 0.5 + 0.5*math.Sin(shader.Time*0.8+v.Position.Z)
+    
+    return fauxgl.Color{red, green, blue, 1.0}
+}
+```
+
 ### 🖼️ 高级纹理系统
 
 - **多种纹理类型**: 基础颜色、法线、金属度、粗糙度等
@@ -342,6 +487,30 @@ go run uv_editor.go
 ```bash
 cd examples
 go run complete_demo.go
+```
+
+### 阴影映射演示 🆕
+```bash
+cd examples
+go run shadow_postprocessing_demo.go
+```
+
+### 几何体和相机系统演示 🆕
+```bash
+cd examples
+go run geometry_camera_demo.go
+```
+
+### 自定义着色器演示 🆕
+```bash
+cd examples
+go run custom_shader_demo.go
+```
+
+### 综合功能演示 🆕
+```bash
+cd examples
+go run comprehensive_demo.go
 ```
 
 ## 支持的GLTF特性
@@ -567,6 +736,64 @@ type UVSeam struct {
 type Vector2 struct {
     X, Y float64
 }
+
+// 阴影映射系统 🆕
+type ShadowMap struct {
+    Width    int
+    Height   int
+    DepthMap []float64
+}
+
+type ShadowMapRenderer struct {
+    context     *Context
+    shadowMap   *ShadowMap
+    light       Light
+    technique   ShadowTechnique
+}
+
+type ShadowTechnique int
+const (
+    SimpleShadow ShadowTechnique = iota
+    PCFShadow
+    PCSSShadow
+)
+
+// 后期处理效果系统 🆕
+type PostProcessingPipeline struct {
+    Effects []PostProcessingEffect
+}
+
+type PostProcessingEffect interface {
+    Apply(input *image.NRGBA) *image.NRGBA
+}
+
+// 相机系统 🆕
+type OrbitCamera struct {
+    *Camera
+    Target          Vector
+    Distance        float64
+    HorizontalAngle float64
+    VerticalAngle   float64
+}
+
+type FirstPersonCamera struct {
+    *Camera
+    Yaw   float64
+    Pitch float64
+    Speed float64
+}
+
+// 几何体系统 🆕
+type Mesh struct {
+    Triangles []*Triangle
+    Lines     []*Line
+}
+
+// 着色器系统 🆕
+type Shader interface {
+    Vertex(Vertex) Vertex
+    Fragment(Vertex) Color
+}
 ```
 
 ### 主要函数
@@ -599,6 +826,32 @@ func RelaxUVs(island *UVIsland, settings *UVRelaxationSettings)
 func UVToCanvas(uv Vector2, canvasWidth, canvasHeight int) (int, int)
 func CanvasToUV(x, y, canvasWidth, canvasHeight int) Vector2
 
+// 阴影映射系统 🆕
+func NewShadowMapRenderer(context *Context, shadowMapSize int, light Light, technique ShadowTechnique) *ShadowMapRenderer
+func (sr *ShadowMapRenderer) GenerateShadowMap(scene *Scene) *ShadowMap
+func NewSoftShadowReceiverShader(matrix, lightMatrix Matrix, lightDirection, cameraPosition Vector, shadowMap *ShadowMap, technique ShadowTechnique) *SoftShadowReceiverShader
+
+// 后期处理效果系统 🆕
+func NewPostProcessingPipeline() *PostProcessingPipeline
+func (pp *PostProcessingPipeline) AddEffect(effect PostProcessingEffect)
+func (pp *PostProcessingPipeline) Process(input *image.NRGBA) *image.NRGBA
+
+// 相机系统 🆕
+func NewOrbitCamera(name string, target Vector, distance, fov, aspectRatio, near, far float64) *OrbitCamera
+func NewFirstPersonCamera(name string, position Vector, fov, aspectRatio, near, far float64) *FirstPersonCamera
+
+// 几何体系统 🆕
+func NewCube() *Mesh
+func NewSphere(detail int) *Mesh
+func NewCone(step int, capped bool) *Mesh
+func NewCylinder(radius, height float64, radialSegments, heightSegments int, openEnded bool) *Mesh
+func NewPlane(width, height float64) *Mesh
+func NewTorus(radius, tubeRadius float64, radialSegments, tubularSegments int) *Mesh
+func NewCapsule(radius, height float64, radialSegments, heightSegments, capSegments int) *Mesh
+func (m *Mesh) Subdivide() *Mesh
+func (m *Mesh) Tessellate(maxEdgeLength float64) *Mesh
+func (m *Mesh) Smooth(iterations int) *Mesh
+
 // 动画
 func NewAnimationPlayer() *AnimationPlayer
 func (p *AnimationPlayer) Play(name string)
@@ -613,6 +866,15 @@ func (scene *Scene) GetLightsByType(lightType LightType) []Light
 ```
 
 ## 版本历史
+
+### v1.4.0 (阴影映射和后期处理版) 🆕
+- 🌒 **阴影映射系统**: 完整实现阴影贴图渲染
+- 🌈 **后期处理效果**: 实现效果组合器和常用效果
+- 🎥 **增强相机系统**: 多种相机控制类和视锥体剔除优化
+- 🧱 **更多几何体类型**: 内置常用几何体生成函数
+- 🧠 **着色器材质系统**: 支持自定义着色器程序
+- 🔄 **几何体细分**: 支持网格细分和修改功能
+- 📊 **性能优化**: 多种渲染优化技术
 
 ### v1.3.0 (UV编辑器和多光源系统版) 🆕
 - 🧩 **UV编辑器系统**: 基于Blender的UV展开逻辑实现

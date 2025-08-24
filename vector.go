@@ -43,6 +43,14 @@ func (a Vector) Distance(b Vector) float64 {
 	return SIMDVectorDistance(a, b)
 }
 
+// DistanceSq returns the square of the distance between two vectors
+func (a Vector) DistanceSq(b Vector) float64 {
+	dx := a.X - b.X
+	dy := a.Y - b.Y
+	dz := a.Z - b.Z
+	return dx*dx + dy*dy + dz*dz
+}
+
 func (a Vector) LengthSquared() float64 {
 	return a.X*a.X + a.Y*a.Y + a.Z*a.Z
 }

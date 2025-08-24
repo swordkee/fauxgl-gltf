@@ -1,6 +1,7 @@
 package fauxgl
 
 import (
+	"fmt"
 	"math"
 )
 
@@ -86,6 +87,77 @@ func smoothNormalsThreshold(normal Vector, normals []Vector, threshold float64) 
 		}
 	}
 	return result.Normalize()
+}
+
+// WeldVertices welds vertices that are very close to each other
+func (m *Mesh) WeldVertices(threshold float64) {
+	if len(m.Triangles) == 0 {
+		return
+	}
+
+	// 创建顶点位置到索引的映射
+	vertexMap := make(map[string]int)
+	vertices := make([]Vector, 0)
+	triangles := make([]*Triangle, len(m.Triangles))
+
+	// 阈值平方，避免重复计算平方根
+	thresholdSq := threshold * threshold
+
+	// 获取或创建顶点索引的辅助函数
+	getOrCreateVertex := func(pos Vector) int {
+		// 使用位置的字符串表示作为键（带精度限制）
+		key := fmt.Sprintf("%.6f,%.6f,%.6f", pos.X, pos.Y, pos.Z)
+		if idx, exists := vertexMap[key]; exists {
+			return idx
+		}
+
+		// 检查是否有一个非常接近的顶点
+		for i, v := range vertices {
+			if pos.DistanceSq(v) < thresholdSq {
+				return i
+			}
+		}
+
+		// 创建新顶点
+		idx := len(vertices)
+		vertices = append(vertices, pos)
+		vertexMap[key] = idx
+		return idx
+	}
+
+	// 处理所有三角形
+	for i, t := range m.Triangles {
+		newT := &Triangle{}
+
+		// 处理顶点1
+		v1Idx := getOrCreateVertex(t.V1.Position)
+		newT.V1 = Vertex{
+			Position: vertices[v1Idx],
+			Normal:   t.V1.Normal,
+			Texture:  t.V1.Texture,
+		}
+
+		// 处理顶点2
+		v2Idx := getOrCreateVertex(t.V2.Position)
+		newT.V2 = Vertex{
+			Position: vertices[v2Idx],
+			Normal:   t.V2.Normal,
+			Texture:  t.V2.Texture,
+		}
+
+		// 处理顶点3
+		v3Idx := getOrCreateVertex(t.V3.Position)
+		newT.V3 = Vertex{
+			Position: vertices[v3Idx],
+			Normal:   t.V3.Normal,
+			Texture:  t.V3.Texture,
+		}
+
+		triangles[i] = newT
+	}
+
+	m.Triangles = triangles
+	m.dirty()
 }
 
 // SmoothNormalsThreshold f

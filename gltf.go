@@ -327,7 +327,31 @@ func (loader *GLTFLoader) loadNode(nodeIndex int, parent *SceneNode) (*SceneNode
 		}
 		if hasRotation {
 			// Convert quaternion to rotation matrix
-			// For simplicity, we'll skip this for now
+			q := gltfNode.Rotation
+			// 创建四元数 [x, y, z, w]
+			x, y, z, w := float64(q[0]), float64(q[1]), float64(q[2]), float64(q[3])
+
+			// 四元数到矩阵的转换
+			// https://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToMatrix/
+			// 注意GLTF使用的是[x, y, z, w]格式的四元数
+			xx := 2 * x * x
+			yy := 2 * y * y
+			zz := 2 * z * z
+			xy := 2 * x * y
+			xz := 2 * x * z
+			yz := 2 * y * z
+			wx := 2 * w * x
+			wy := 2 * w * y
+			wz := 2 * w * z
+
+			rotationMatrix := Matrix{
+				1 - yy - zz, xy - wz, xz + wy, 0,
+				xy + wz, 1 - xx - zz, yz - wx, 0,
+				xz - wy, yz + wx, 1 - xx - yy, 0,
+				0, 0, 0, 1,
+			}
+
+			transform = transform.Mul(rotationMatrix)
 		}
 
 		// Scale

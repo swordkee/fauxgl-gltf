@@ -10,7 +10,7 @@ import (
 
 const (
 	// 使用texture.png作为主体区域纹理
-	MAIN_TEXTURE_FILE = "texture.png"
+	MAIN_TEXTURE_FILE = "./gltf/meshes.png"
 
 	// 渲染参数
 	scale  = 4    // 4x 超采样抗锯齿

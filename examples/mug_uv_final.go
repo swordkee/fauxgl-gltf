@@ -15,7 +15,7 @@ var decorativeTexture *fauxgl.AdvancedTexture
 // **配置区域**: 在这里修改您想使用的纹理文件
 const (
 	// **自定义纹理文件**: 将您的纹理文件名替换这里
-	CUSTOM_TEXTURE_FILE = "texture.png" // 修改为您的纹理文件名
+	CUSTOM_TEXTURE_FILE = "./gltf/meshes.png" // 修改为您的纹理文件名
 
 	// **渲染参数**: 高质量渲染以达到300KB+
 	scale  = 4    // 4x 超采样抗锯齿
@@ -98,10 +98,10 @@ func loadCustomTexture(scene *fauxgl.Scene, texturePath string) {
 	fmt.Println("\n=== 加载自定义纹理 ===")
 
 	// 加载texture.png作为棋盘格贴图（用于主体区域）
-	fmt.Println("尝试加载棋盘格贴图 texture.png...")
-	checkerTexture, err := fauxgl.LoadAdvancedTexture("texture.png", fauxgl.BaseColorTexture)
+	fmt.Println("尝试加载棋盘格贴图 meshes.png...")
+	checkerTexture, err := fauxgl.LoadAdvancedTexture("./gltf/meshes.png", fauxgl.BaseColorTexture)
 	if err != nil {
-		fmt.Printf(" ✗ 无法加载棋盘格贴图 texture.png: %v\n", err)
+		fmt.Printf(" ✗ 无法加载棋盘格贴图 meshes.png: %v\n", err)
 		// 尝试使用备选纹理
 		checkerTexture, err = fauxgl.LoadAdvancedTexture(texturePath, fauxgl.BaseColorTexture)
 		if err != nil {
@@ -112,7 +112,7 @@ func loadCustomTexture(scene *fauxgl.Scene, texturePath string) {
 		}
 		fmt.Printf("✓ 备选贴图加载成功 (%dx%d)\n", checkerTexture.Width, checkerTexture.Height)
 	} else {
-		fmt.Printf("✓ 棋盘格贴图 texture.png 加载成功 (%dx%d)\n", checkerTexture.Width, checkerTexture.Height)
+		fmt.Printf("✓ 棋盘格贴图 meshes.png 加载成功 (%dx%d)\n", checkerTexture.Width, checkerTexture.Height)
 	}
 
 	// 验证纹理内容
@@ -301,13 +301,14 @@ func preprocessMeshesFixed(scene *fauxgl.Scene) {
 		fmt.Printf("  原始尺寸: %v\n", originalBounds.Size())
 
 		// 修复方案: 进行细致的网格处理，解决破碎问题
-		// 1. 先进行更全面的法线平滑
-		mesh.SmoothNormals()
-		fmt.Println("  ✓ 应用全面法线平滑")
+		// 1. 只对需要平滑的区域进行法线平滑，避免过度处理
+		// 2. 使用更保守的角度阈值
+		mesh.SmoothNormalsThreshold(fauxgl.Radians(30)) // 从60度减小到30度，更加保守
+		fmt.Println("  ✓ 应用保守法线平滑(30度阈值)")
 
-		// 2. 再应用带阈值的法线平滑，保留锐利边缘
-		mesh.SmoothNormalsThreshold(fauxgl.Radians(60))
-		fmt.Println("  ✓ 应用阈值法线平滑，保留锐利边缘")
+		// 3. 修复网格中的间隙问题
+		mesh.WeldVertices(1e-4) // 焊接距离非常近的顶点
+		fmt.Println("  ✓ 焊接临近顶点以修复间隙")
 
 		// 打印处理后边界信息
 		newBounds := mesh.BoundingBox()
@@ -482,7 +483,7 @@ func printMaterialInfo(scene *fauxgl.Scene) {
 	fmt.Println("  material_4: 绿色材质（杯口区域）- #94C808")
 	fmt.Println("\n每个primitive使用不同的材质，实现真正的多材质分区。")
 	fmt.Println("\n✨ 最终效果：")
-	fmt.Println("  🎨 主体区域：棋盘格贴图（texture.png）")
+	fmt.Println("  🎨 主体区域：棋盘格贴图（meshes.png）")
 	fmt.Println("  🟩 其他区域：绿色（#94C808）")
 	fmt.Println("  🔥 高质量渲染：高分辨率，超采样抗锯齿")
 	fmt.Println("  🛠️ 保持原始模型形状与比例")
